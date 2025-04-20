@@ -6,6 +6,7 @@
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 
 class Administrateur(models.Model):
@@ -342,6 +343,22 @@ class SuivieSousProjet(models.Model):
         db_table = 'suivie_sous_projet'
 
 
+class UtilisateurManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('The Email field must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        return self.create_user(email, password, **extra_fields)
+
 class Utilisateur(models.Model):
     id_utilisateur = models.AutoField(primary_key=True)
     nom = models.CharField(max_length=100)
@@ -350,7 +367,17 @@ class Utilisateur(models.Model):
     role_de_utilisateur = models.CharField(max_length=50)
     numero_de_tel = models.IntegerField()
     created_at = models.DateTimeField(blank=True, null=True)
+    is_anonymous = models.BooleanField(default=False)
+    is_authenticated = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
 
+
+    USERNAME_FIELD = 'email'    
+    REQUIRED_FIELDS = ['nom', 'role_de_utilisateur', 'numero_de_tel']
+    objects = UtilisateurManager()
     class Meta:
         managed = False
         db_table = 'utilisateur'
+
+    def get_user_id(self):
+        return self.id_utilisateur
