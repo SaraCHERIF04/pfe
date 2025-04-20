@@ -35,8 +35,12 @@ class AuthView(APIView):
         response_data = SuccessAPIResponse({
             'message': 'Login successful',
             'data': {
-                'user_id': user.get_user_id(),
-                'role': user.role_de_utilisateur,
+                'id_utilisateur': user.id_utilisateur,
+                'nom': user.nom,
+                'email': user.email,
+                'role_de_utilisateur': user.role_de_utilisateur,
+                'numero_de_tel': user.numero_de_tel,
+                'created_at': user.created_at,
                 'tokens': {
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
