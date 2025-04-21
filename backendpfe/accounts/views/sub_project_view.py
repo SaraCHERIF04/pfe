@@ -2,13 +2,28 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
 from ..models import SousProjet
 from ..serializers.sub_project_serializer import SousProjetSerializer
 from ..responses.success_api_response import SuccessAPIResponse
 from ..responses.error_api_response import ErrorAPIResponse
 
+class SubProjectPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'per_page'
+    page_query_param = 'page'
+    max_page_size = 100
+
 class SubProjectView(APIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = SubProjectPagination
+
+    def get_paginated_response(self, data):
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(data, self.request)
+        if page is not None:
+            return paginator.get_paginated_response(page)
+        return Response(data)
 
     def get(self, request, projet_id=None, pk=None):
         if projet_id:
@@ -99,12 +114,16 @@ class SubProjectView(APIView):
     def get_sub_projects_by_project(self, request, projet_id):
         sous_projets = SousProjet.objects.filter(id_projet=projet_id)
         serializer = SousProjetSerializer(sous_projets, many=True)
-
-        return Response({
-            'success': True,
-            'message': 'SousProjets retrieved successfully',
-            'data': serializer.data
-        }, status=status.HTTP_200_OK)
+        
+        paginated_response = self.get_paginated_response(serializer.data)
+        if isinstance(paginated_response, Response):
+            return Response({
+                'success': True,
+                'message': 'SousProjets retrieved successfully',
+                'data': paginated_response.data
+            }, status=status.HTTP_200_OK)
+        
+        return paginated_response
 
     def get_object(self, pk):
         try:
