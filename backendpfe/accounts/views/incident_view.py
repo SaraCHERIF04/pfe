@@ -3,18 +3,18 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-from ..models import Projet
-from ..serializers.project_serializer import ProjetSerializer
+from ..models import Incident
+from ..serializers.incident_serializer import IncidentSerializer
 
-class ProjectPagination(PageNumberPagination):
+class IncidentPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'per_page'
     page_query_param = 'page'
     max_page_size = 100
 
-class ProjectView(APIView):
+class IncidentView(APIView):
     permission_classes = [IsAuthenticated]
-    pagination_class = ProjectPagination
+    pagination_class = IncidentPagination
 
     def get_paginated_response(self, data):
         paginator = self.pagination_class()
@@ -25,46 +25,46 @@ class ProjectView(APIView):
 
     def get(self, request, pk=None):
         if pk:
-            return self.get_single_project(request, pk)
-        return self.get_all_projects()
+            return self.get_single_incident(request, pk)
+        return self.get_all_incidents()
 
-    def get_single_project(self, request, pk):
-        project = self.get_object(pk)
-        if not project:
+    def get_single_incident(self, request, pk):
+        incident = self.get_object(pk)
+        if not incident:
             return Response({
                 'success': False,
-                'message': 'Project not found'
+                'message': 'Incident not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ProjetSerializer(project)
+        serializer = IncidentSerializer(incident)
         return Response({
             'success': True,
-            'message': 'Project retrieved successfully',
+            'message': 'Incident retrieved successfully',
             'data': serializer.data
         }, status=status.HTTP_200_OK)
 
-    def get_all_projects(self):
-        projects = Projet.objects.all()
-        serializer = ProjetSerializer(projects, many=True)
+    def get_all_incidents(self):
+        incidents = Incident.objects.all()
+        serializer = IncidentSerializer(incidents, many=True)
         
         paginated_response = self.get_paginated_response(serializer.data)
         if isinstance(paginated_response, Response):
             return Response({
                 'success': True,
-                'message': 'Projects retrieved successfully',
+                'message': 'Incidents retrieved successfully',
                 'data': paginated_response.data
             }, status=status.HTTP_200_OK)
         
         return paginated_response
 
     def post(self, request):
-        serializer = ProjetSerializer(data=request.data)
+        serializer = IncidentSerializer(data=request.data)
         if serializer.is_valid():
-            project = serializer.save()
+            incident = serializer.save()
             return Response({
                 'success': True,
-                'message': 'Project created successfully',
-                'data': ProjetSerializer(project).data
+                'message': 'Incident created successfully',
+                'data': IncidentSerializer(incident).data
             }, status=status.HTTP_201_CREATED)
 
         return Response({
@@ -74,20 +74,20 @@ class ProjectView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, pk):
-        project = self.get_object(pk)
-        if not project:
+        incident = self.get_object(pk)
+        if not incident:
             return Response({
                 'success': False,
-                'message': 'Project not found'
+                'message': 'Incident not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ProjetSerializer(project, data=request.data)
+        serializer = IncidentSerializer(incident, data=request.data)
         if serializer.is_valid():
-            project = serializer.save()
+            incident = serializer.save()
             return Response({
                 'success': True,
-                'message': 'Project updated successfully',
-                'data': ProjetSerializer(project).data
+                'message': 'Incident updated successfully',
+                'data': IncidentSerializer(incident).data
             }, status=status.HTTP_200_OK)
 
         return Response({
@@ -97,21 +97,21 @@ class ProjectView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        project = self.get_object(pk)
-        if not project:
+        incident = self.get_object(pk)
+        if not incident:
             return Response({
                 'success': False,
-                'message': 'Project not found'
+                'message': 'Incident not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
-        project.delete()
+        incident.delete()
         return Response({
             'success': True,
-            'message': 'Project deleted successfully'
+            'message': 'Incident deleted successfully'
         }, status=status.HTTP_204_NO_CONTENT)
 
     def get_object(self, pk):
         try:
-            return Projet.objects.get(pk=pk)
-        except Projet.DoesNotExist:
+            return Incident.objects.get(pk=pk)
+        except Incident.DoesNotExist:
             return None
