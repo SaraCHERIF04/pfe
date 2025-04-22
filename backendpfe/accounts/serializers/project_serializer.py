@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import Projet, Budget
+from ..models import Projet, Ap
 
 class ProjetSerializer(serializers.ModelSerializer):
     class Meta:
