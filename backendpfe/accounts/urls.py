@@ -38,6 +38,14 @@ urlpatterns = [
     # Budget URLs
     path('budget/', BudgetView.as_view(), name='budget_list'),
     path('budget/<int:pk>/', BudgetView.as_view(), name='budget_detail'),
+    # Maitre d'Ouvrage endpoints
+    path('maitre-ouvrage/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_list'),
+   path('maitre-ouvrage/<int:pk>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_detail'),
+     path('maitre-ouvrage/projet/<int:projet_id>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_by_project'),
+    # Retrieve all, by project, or a single maitre d'oeuvre
+    path('maitre-doeuvre/', MaitreDoeuvreView.as_view(), name='maitre-doeuvre-list'),
+    path('maitre-doeuvre/<int:pk>/', MaitreDoeuvreView.as_view(), name='maitre-doeuvre-detail'),
+    path('maitre-doeuvre/projet/<int:projet_id>/', MaitreDoeuvreView.as_view(), name='maitre-doeuvre-by-project'),
 
     #sign up
     # path('accounts/create/', create_account, name='create_account'),
