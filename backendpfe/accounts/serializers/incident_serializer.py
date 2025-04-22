@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import Incident, Projet, SousProjet, SuivieIncident
+from ..models import Incident, Projet, SousProjet
 
 class IncidentSerializer(serializers.ModelSerializer):
     class Meta:
