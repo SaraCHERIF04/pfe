@@ -4,14 +4,15 @@ from .views import (
     DocumentView,
     IncidentView,
     MeetingView,
-    BudgetView,
-    SubProjectView
+    ApView,  # Remplacement de BudgetView par ApView
+    SubProjectView,
+    FactureView
 )
 from .views.auth_views import AuthView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
-    #sign in
+    # sign in
     path('auth/', AuthView.as_view(), name='auth'),
 
     # Project URLs
@@ -35,19 +36,15 @@ urlpatterns = [
     path('reunion/', MeetingView.as_view(), name='meeting_list'),
     path('reunion/<int:pk>/', MeetingView.as_view(), name='meeting_detail'),
 
-    # Budget URLs
-    path('budget/', BudgetView.as_view(), name='budget_list'),
-    path('budget/<int:pk>/', BudgetView.as_view(), name='budget_detail'),
-    # Maitre d'Ouvrage endpoints
-    path('maitre-ouvrage/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_list'),
-   path('maitre-ouvrage/<int:pk>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_detail'),
-     path('maitre-ouvrage/projet/<int:projet_id>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_by_project'),
-    # Retrieve all, by project, or a single maitre d'oeuvre
-    path('maitre-doeuvre/', MaitreDoeuvreView.as_view(), name='maitre-doeuvre-list'),
-    path('maitre-doeuvre/<int:pk>/', MaitreDoeuvreView.as_view(), name='maitre-doeuvre-detail'),
-    path('maitre-doeuvre/projet/<int:projet_id>/', MaitreDoeuvreView.as_view(), name='maitre-doeuvre-by-project'),
-
-    #sign up
+    # AP URLs (remplace les anciennes URLs de Budget par celles de AP)
+    path('ap/', ApView.as_view(), name='ap_list'),  # Liste des AP
+    path('ap/<int:pk>/', ApView.as_view(), name='ap_detail'),  # Détail d'un AP
+# Facture URLs
+path('facture/', FactureView.as_view(), name='facture_list'),  # Liste des factures
+path('facture/<int:pk>/', FactureView.as_view(), name='facture_detail'),  # Détail d'une facture
+path('facture/projet/<int:projet_id>/', FactureView.as_view(), name='facture_by_project'),  # Factures par projet
+path('facture/sous-projet/<int:sous_projet_id>/', FactureView.as_view(), name='facture_by_sub_project'),  # Factures par sous-projet
+    # sign up
     # path('accounts/create/', create_account, name='create_account'),
     # path('projects/create/', CreateProjectView.as_view(), name='create_project'),
 ]
