@@ -1,22 +1,18 @@
-# myapp/views/__init__.py
-
 from .project_view import ProjectView
 from .document_view import DocumentView
 from .incident_view import IncidentView
 from .meeting_view import MeetingView
-from .budget_view import BudgetView
-from .maitre_ouvrage_view import MaitreOuvrageView
-from .maitre_doeuvre_view import MaitreDoeuvreView
+from .ap_view import ApView  # Remplacer BudgetView par ApView
 from .sub_project_view import SubProjectView
 from .auth_views import AuthView
-
-__all__ = [
+from .facture_view import FactureView
+all = [
     'ProjectView',
     'DocumentView',
     'IncidentView',
     'MeetingView',
-    'BudgetView',
+    'ApView',  # Ajout de ApView
     'SubProjectView',
-    'AuthView'
+    'AuthView',
+    'FactureView'
 ]
-
