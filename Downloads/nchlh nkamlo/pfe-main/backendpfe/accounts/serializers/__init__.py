@@ -1,5 +1,0 @@
-from ..serializers.utilisateur_serializer import UtilisateurSerializer
-from .sub_project_serializer import SousProjetSerializer
-from ..serializers.maitre_doeuvre_serializer import MaitreDoeuvreSerializer
-from ..serializers.maitre_ouvrage_serializer import MaitreOuvrageSerializer
-from ..serializers.Projects_serializers import ProjetSerializer
