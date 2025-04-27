@@ -9,6 +9,7 @@ class LoginSerializer(serializers.Serializer):
     def validate(self, attrs):
         email = attrs.get('email')
         mot_de_passe = attrs.get('mot_de_passe')
+        fcm_token = attrs.get('fcm_token')
 
        
         try:

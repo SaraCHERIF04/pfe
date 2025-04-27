@@ -169,6 +169,8 @@ class DjangoSession(models.Model):
 class Document(models.Model):
     id_document = models.AutoField(primary_key=True)
     titre = models.CharField(max_length=30)
+    type = models.CharField(max_length=30)
+    chemin = models.CharField(max_length=255)
     date_ajout = models.DateField()
     description = models.CharField(max_length=30)
     id_projet = models.ForeignKey('Projet', models.DO_NOTHING, db_column='id_projet', blank=True, null=True)
@@ -303,7 +305,7 @@ class Projet(models.Model):
     description_de_projet = models.CharField(max_length=30)
     date_debut_de_projet = models.DateField()
     date_fin_de_projet = models.DateField()
-    statut = models.CharField(max_length=30)
+    status = models.CharField(max_length=30)
     id_utilisateur = models.ForeignKey(Chefprojet, models.DO_NOTHING, db_column='id_utilisateur', blank=True, null=True)
 
     class Meta:
@@ -357,7 +359,7 @@ class Utilisateur(models.Model):
     id_utilisateur = models.AutoField(primary_key=True)
     nom = models.CharField(max_length=100)
     email = models.CharField(unique=True, max_length=100)
-    mot_de_passe = models.CharField(max_length=255)
+    mot_de_passe = models.CharField(max_length=255, blank=True, null=True)
     role_de_utilisateur = models.CharField(max_length=50)
     numero_de_tel = models.CharField(unique=True, max_length=10, blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
@@ -365,9 +367,12 @@ class Utilisateur(models.Model):
     etat = models.CharField(db_column='Etat', max_length=20, blank=True, null=True)  # Field name made lowercase.
     prenom = models.CharField(max_length=20, blank=True, null=True)
     matricule = models.IntegerField(unique=True, blank=True, null=True)
-    is_anonymous = models.IntegerField()
-    is_authenticated = models.IntegerField()
-    is_active = models.IntegerField()
+    is_anonymous = models.IntegerField(default=0)
+    is_authenticated = models.IntegerField(default=0)
+    is_active = models.IntegerField(default=0)
+    fcm_token = models.TextField(blank=True, null=True)
+    REQUIRED_FIELDS = ['nom', 'role_de_utilisateur']
+    USERNAME_FIELD = 'email'
 
     class Meta:
         managed = False
@@ -382,3 +387,19 @@ class Wilayas(models.Model):
     class Meta:
         managed = False
         db_table = 'wilayas'
+
+class Notification(models.Model):
+    id_notification = models.AutoField(primary_key=True)
+    titre = models.CharField(max_length=100)
+    contenu = models.TextField()
+    lien = models.TextField(default=None)
+    type = models.TextField(choices=[('info', 'Info'), ('warning', 'Warning'),('new_project', 'New Project'),('new_sub_project', 'New Sub Project'),('new_reunion', 'New Reunion')])
+    created_at = models.DateTimeField(auto_now_add=True)
+    lu = models.BooleanField(default=0)
+    id_utilisateur = models.ForeignKey(Utilisateur, models.DO_NOTHING, db_column='id_utilisateur', blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'notification'
+
+    

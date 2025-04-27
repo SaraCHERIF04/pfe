@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-from ..models import SousProjet
+from ..models import SousProjet, Employe, Document
 from ..serializers.sub_project_serializer import SousProjetSerializer
 from ..responses.success_api_response import SuccessAPIResponse
 from ..responses.error_api_response import ErrorAPIResponse
@@ -32,7 +32,7 @@ class SubProjectView(APIView):
         if pk:
             return self.get_single_sub_project(request, pk)
 
-        return self.get_all_sub_projects()
+        return self.get_all_sub_projects(request)
 
     def get_single_sub_project(self, request, pk):
         sous_projet = self.get_object(pk)
@@ -49,14 +49,19 @@ class SubProjectView(APIView):
             'data': serializer.data
         }, status=status.HTTP_200_OK)
 
-    def get_all_sub_projects(self):
+    def get_all_sub_projects(self, request):
         sous_projets = SousProjet.objects.all()
         serializer = SousProjetSerializer(sous_projets, many=True)
-        return Response({
-            'success': True,
-            'message': 'SousProjets retrieved successfully',
-            'data': serializer.data
-        }, status=status.HTTP_200_OK)
+        
+        paginated_response = self.get_paginated_response(serializer.data)
+        if isinstance(paginated_response, Response):
+            return Response({
+                'success': True,
+                'message': 'SousProjets retrieved successfully',
+                'data': paginated_response.data
+            }, status=status.HTTP_200_OK)
+        
+        return paginated_response
 
     def post(self, request):
         serializer = SousProjetSerializer(data=request.data)
@@ -82,7 +87,7 @@ class SubProjectView(APIView):
                 'message': 'SousProjet not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = SousProjetSerializer(sous_projet, data=request.data)
+        serializer = SousProjetSerializer(sous_projet, data=request.data, partial=True)
         if serializer.is_valid():
             sous_projet = serializer.save()
             return Response({

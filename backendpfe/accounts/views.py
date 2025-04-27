@@ -10,12 +10,14 @@ from .permissions import IsAdmin, IsChefDeProjet
 from datetime import datetime
 from django.contrib.auth.hashers import check_password, make_password
 import logging
+from .services.notification_service import NotificationService
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
     email = request.data.get('email')
     mot_de_passe = request.data.get('mot_de_passe')
+    fcm_token = request.data.get('fcm_token')  # Get FCM token from request
 
     if not email or not mot_de_passe:
         return Response({'error': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -62,4 +64,32 @@ def create_account(request):
 
 
 # --- CREATE PROJECT (Chef de Projet only) ---
+
+class ProjectCreateView(APIView):
+    def post(self, request):
+        # Your existing project creation logic
+        project_name = request.data.get('nom_projet')
+        project = Projet.objects.create(
+            nom_projet=project_name,
+            description_de_projet=request.data.get('description_de_projet'),
+            date_debut_de_projet=request.data.get('date_debut_de_projet'),
+            date_fin_de_projet=request.data.get('date_fin_de_projet'),
+            statut=request.data.get('statut'),
+            id_utilisateur_id=request.data.get('id_utilisateur')
+        )
+
+        # Get all users who should be notified about the new project
+        # This could be all users, or specific roles, or project members
+        users_to_notify = Utilisateur.objects.filter(
+            role_de_utilisateur__in=['directeur', 'chefprojet', 'employe']
+        ).values_list('id_utilisateur', flat=True)
+
+        # Send notification using the service
+        NotificationService.send_project_notification(
+            project_name=project_name,
+            project_id=project.id_projet,
+            user_ids=list(users_to_notify)
+        )
+
+        return Response({"message": "Project created successfully"}, status=status.HTTP_201_CREATED)
 

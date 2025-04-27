@@ -12,6 +12,20 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import sys
+import os
+
+# Add the parent directory to sys.path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import Firebase configuration
+from firebase_config import initialize_firebase, get_db_config
+
+# Try to initialize Firebase for getting dynamic configuration
+try:
+    initialize_firebase()
+except Exception as e:
+    print(f"Warning: Failed to initialize Firebase: {e}")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -62,6 +76,7 @@ REST_FRAMEWORK = {
 }
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -69,7 +84,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
+    
 ]
 CORS_ALLOW_ALL_ORIGINS = True 
 ROOT_URLCONF = "backendpfe.urls"
@@ -91,20 +106,47 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backendpfe.wsgi.application"
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5174",
+]
+
+
+APPEND_SLASH = False
+
+CORS_ALLOW_CREDENTIALS = True
+
+# If you want to allow all headers
+CORS_ALLOW_ALL_HEADERS = True
+
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'bddpfe',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '3306',
+# Get database configuration from Firebase if available
+firebase_db_config = get_db_config()
+
+if firebase_db_config:
+    print("Using database configuration from Firebase")
+    DATABASES = {
+        'default': firebase_db_config
     }
-}
+else:
+    print("Using default database configuration")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'bddpfe',
+            'USER': 'root',
+            'PASSWORD': '',
+            'HOST': 'localhost',
+            'PORT': '3306',
+        }
+    }
+
+EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
+EMAIL_HOST_USER = '089f45f65f0d16'
+EMAIL_HOST_PASSWORD = '3705254c9a917d'
+EMAIL_PORT = '2525'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -142,7 +184,13 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+# Media files (Uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+FRONTEND_URL = 'http://localhost:5174'

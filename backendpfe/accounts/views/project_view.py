@@ -3,8 +3,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-from ..models import Projet
+from ..models import Projet, Employe, Document
 from ..serializers.project_serializer import ProjetSerializer
+from ..services.notification_service import NotificationService
 
 class ProjectPagination(PageNumberPagination):
     page_size = 10
@@ -26,7 +27,7 @@ class ProjectView(APIView):
     def get(self, request, pk=None):
         if pk:
             return self.get_single_project(request, pk)
-        return self.get_all_projects()
+        return self.get_all_projects(request)
 
     def get_single_project(self, request, pk):
         project = self.get_object(pk)
@@ -43,7 +44,7 @@ class ProjectView(APIView):
             'data': serializer.data
         }, status=status.HTTP_200_OK)
 
-    def get_all_projects(self):
+    def get_all_projects(self, request):
         projects = Projet.objects.all()
         serializer = ProjetSerializer(projects, many=True)
         
@@ -61,6 +62,11 @@ class ProjectView(APIView):
         serializer = ProjetSerializer(data=request.data)
         if serializer.is_valid():
             project = serializer.save()
+            NotificationService.send_project_notification(
+                project_name=project.nom_projet,
+                project_id=project.id_projet,
+                user_ids=[12]
+            )
             return Response({
                 'success': True,
                 'message': 'Project created successfully',
@@ -81,7 +87,7 @@ class ProjectView(APIView):
                 'message': 'Project not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ProjetSerializer(project, data=request.data)
+        serializer = ProjetSerializer(project, data=request.data, partial=True)
         if serializer.is_valid():
             project = serializer.save()
             return Response({

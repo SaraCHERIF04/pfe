@@ -30,7 +30,10 @@ class AuthView(APIView):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        print(user) 
+        user.fcm_token = request.data.get('fcm_token')
+        user.is_active = True
+        user.is_authenticated = True
+        user.save()
         refresh = RefreshToken.for_user(user)
         response_data = SuccessAPIResponse({
             'message': 'Login successful',
@@ -58,8 +61,14 @@ class AuthView(APIView):
                 mot_de_passe=make_password(data.get('mot_de_passe')),
                 role_de_utilisateur=data.get('role_de_utilisateur'),
                 numero_de_tel=data.get('numero_de_tel'),
-                created_at=datetime.now()
+                created_at=datetime.now(),
+                prenom=data.get('prenom'),
+                sexe=data.get('sexe'),
+                etat=data.get('etat'),
+                matricule=data.get('matricule')
+                
             )
             return Response(SuccessAPIResponse({'message': 'User created successfully', 'user_id': user.id_utilisateur}).data, status=status.HTTP_201_CREATED)
         except Exception as e:
+            print(e)
             return Response(ErrorAPIResponse({'error': str(e)}).data, status=status.HTTP_400_BAD_REQUEST)

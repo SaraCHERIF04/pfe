@@ -6,6 +6,9 @@ from .ap_view import ApView  # Remplacer BudgetView par ApView
 from .sub_project_view import SubProjectView
 from .auth_views import AuthView
 from .facture_view import FactureView
+from .user_view import UserView
+from .employer_view import EmployerView
+
 all = [
     'ProjectView',
     'DocumentView',
@@ -14,5 +17,7 @@ all = [
     'ApView',  # Ajout de ApView
     'SubProjectView',
     'AuthView',
-    'FactureView'
+    'FactureView',
+    'UserView',
+    'EmployerView'
 ]
