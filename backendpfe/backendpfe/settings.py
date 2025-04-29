@@ -18,14 +18,14 @@ import os
 # Add the parent directory to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Import Firebase configuration
-from firebase_config import initialize_firebase, get_db_config
+# # Import Firebase configuration
+# from firebase_config import initialize_firebase, get_db_config
 
-# Try to initialize Firebase for getting dynamic configuration
-try:
-    initialize_firebase()
-except Exception as e:
-    print(f"Warning: Failed to initialize Firebase: {e}")
+# # Try to initialize Firebase for getting dynamic configuration
+# try:
+#     initialize_firebase()
+# except Exception as e:
+#     print(f"Warning: Failed to initialize Firebase: {e}")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -123,8 +123,8 @@ CORS_ALLOW_ALL_HEADERS = True
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # Get database configuration from Firebase if available
-firebase_db_config = get_db_config()
-
+# firebase_db_config = get_db_config()
+firebase_db_config = None
 if firebase_db_config:
     print("Using database configuration from Firebase")
     DATABASES = {
