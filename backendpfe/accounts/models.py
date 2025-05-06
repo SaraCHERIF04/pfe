@@ -170,7 +170,6 @@ class Document(models.Model):
     id_document = models.AutoField(primary_key=True)
     titre = models.CharField(max_length=30)
     type = models.CharField(max_length=30)
-    chemin = models.CharField(max_length=255)
     date_ajout = models.DateField()
     description = models.CharField(max_length=30)
     id_projet = models.ForeignKey('Projet', models.DO_NOTHING, db_column='id_projet', blank=True, null=True)
@@ -179,6 +178,16 @@ class Document(models.Model):
     class Meta:
         managed = False
         db_table = 'document'
+
+
+class DocumentFile(models.Model):
+    id_file = models.AutoField(primary_key=True)
+    id_document = models.ForeignKey(Document, models.DO_NOTHING, db_column='id_document', related_name='files')
+    chemin = models.CharField(max_length=255)
+
+    class Meta:
+        managed = False
+        db_table = 'document_file'
 
 
 class Employe(models.Model):

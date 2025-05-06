@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from django.db.models import Q
-from ..models import Employe, Projet, SousProjet, Reunion, Incident, Utilisateur, Document
+from ..models import Employe, Projet, SousProjet, Reunion, Incident, Utilisateur, Document, DocumentFile
 from ..permissions import IsEmployee
 from rest_framework.pagination import PageNumberPagination
 from datetime import datetime
@@ -296,7 +296,6 @@ class EmployerView(APIView):
                     'id_document': doc.id_document,
                     'titre': doc.titre,
                     'type': doc.type,
-                    'chemin': doc.chemin,
                     'date_ajout': doc.date_ajout,
                     'description': doc.description,
                     'project': doc.id_projet.nom_projet if doc.id_projet else None,
@@ -377,11 +376,12 @@ class EmployerView(APIView):
                     'message': 'Either project_id or subproject_id must be provided'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Verify that there's a file in the request
-            if 'file' not in request.FILES:
+            # Verify that there are files in the request
+            files = request.FILES.getlist('files')
+            if not files:
                 return Response({
                     'success': False,
-                    'message': 'No file provided'
+                    'message': 'No files provided'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Verify that the employee has access to the specified project/subproject
@@ -423,63 +423,78 @@ class EmployerView(APIView):
                         'success': False,
                         'message': 'Subproject not found'
                     }, status=status.HTTP_404_NOT_FOUND)
-            
-            # Handle file upload
-            uploaded_file = request.FILES['file']
-            file_name = uploaded_file.name
-            
-            # Generate a unique filename to prevent overwrites
-            file_extension = os.path.splitext(file_name)[1]
-            unique_filename = f"{uuid.uuid4()}{file_extension}"
-            
-            # Create directory for documents if it doesn't exist
-            document_dir = os.path.join(settings.MEDIA_ROOT, 'documents')
-            os.makedirs(document_dir, exist_ok=True)
-            
-            # Create subdirectory for project or subproject
-            target_dir = document_dir
-            if project:
-                project_dir = os.path.join(document_dir, f'project_{project.id_projet}')
-                os.makedirs(project_dir, exist_ok=True)
-                target_dir = project_dir
-            elif subproject:
-                subproject_dir = os.path.join(document_dir, f'subproject_{subproject.id_sous_projet}')
-                os.makedirs(subproject_dir, exist_ok=True)
-                target_dir = subproject_dir
-            
-            # Save the file
-            file_path = os.path.join(target_dir, unique_filename)
-            relative_path = os.path.relpath(file_path, settings.MEDIA_ROOT)
-            
-            with open(file_path, 'wb+') as destination:
-                for chunk in uploaded_file.chunks():
-                    destination.write(chunk)
-            
-            # Create the new document
-            new_document = Document(
-                titre=data['titre'],
-                type=data['type'],
-                chemin=relative_path,
-                description=data['description'],
-                date_ajout=datetime.now().date(),
-                id_projet=project,
-                id_sous_projet=subproject
-            )
-            new_document.save()
-            
-            # Return the created document
+
+            # Create the document
+            document_data = {
+                'titre': data['titre'],
+                'type': data['type'],
+                'date_ajout': data.get('date_ajout', datetime.now().date()),
+                'description': data['description'],
+                'id_projet': project,
+                'id_sous_projet': subproject
+            }
+
+            # Create document
+            document = Document.objects.create(**document_data)
+
+            # Handle file uploads
+            for file in files:
+                # Get file type and extension
+                file_type = data['type'].lower()
+                file_extension = os.path.splitext(file.name)[1].lower()
+                
+                # Validate file type matches extension
+                if file_type == 'pdf' and file_extension != '.pdf':
+                    return Response({
+                        'success': False,
+                        'message': 'File extension does not match specified type'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Create appropriate folder based on file type
+                if file_type == 'pdf':
+                    upload_dir = os.path.join('pdfs')
+                elif file_type in ['jpg', 'jpeg', 'png', 'gif']:
+                    upload_dir = os.path.join('images')
+                else:
+                    upload_dir = os.path.join('other')
+
+                # Create full path for directory
+                full_upload_dir = os.path.join(settings.MEDIA_ROOT, upload_dir)
+                os.makedirs(full_upload_dir, exist_ok=True)
+
+                # Generate unique filename with timestamp and project ID
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                project_id = data.get('project_id', 'unknown')
+                new_filename = f"{timestamp}_{project_id}_{len(document.files.all())}{file_extension}"
+                
+                # Save the file
+                file_path = os.path.join(full_upload_dir, new_filename)
+                with open(file_path, 'wb+') as destination:
+                    for chunk in file.chunks():
+                        destination.write(chunk)
+
+                # Create document file record
+                DocumentFile.objects.create(
+                    id_document=document,
+                    chemin=os.path.join(upload_dir, new_filename)
+                )
+
+            # Return the created document with its files
             return Response({
                 'success': True,
                 'message': 'Document added successfully',
                 'data': {
-                    'id_document': new_document.id_document,
-                    'titre': new_document.titre,
-                    'type': new_document.type,
-                    'chemin': new_document.chemin,
-                    'date_ajout': new_document.date_ajout,
-                    'description': new_document.description,
-                    'project': new_document.id_projet.nom_projet if new_document.id_projet else None,
-                    'subproject': new_document.id_sous_projet.nom_sous_projet if new_document.id_sous_projet else None
+                    'id_document': document.id_document,
+                    'titre': document.titre,
+                    'type': document.type,
+                    'date_ajout': document.date_ajout,
+                    'description': document.description,
+                    'project': document.id_projet.nom_projet if document.id_projet else None,
+                    'subproject': document.id_sous_projet.nom_sous_projet if document.id_sous_projet else None,
+                    'files': [{
+                        'id_file': file.id_file,
+                        'chemin': file.chemin
+                    } for file in document.files.all()]
                 }
             }, status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -529,54 +544,66 @@ class EmployerView(APIView):
             if 'description' in data and data['description']:
                 document.description = data['description']
             
-            # Handle file upload if a new file is provided
-            if 'file' in request.FILES:
-                # Remove old file if it exists
-                old_file_path = os.path.join(settings.MEDIA_ROOT, document.chemin)
-                if os.path.exists(old_file_path):
-                    try:
-                        os.remove(old_file_path)
-                    except OSError:
-                        # Log the error but continue
-                        print(f"Error removing old file: {old_file_path}")
+            # Handle file uploads if new files are provided
+            files = request.FILES.getlist('files')
+            if files:
+                # Remove old files
+                for old_file in document.files.all():
+                    old_file_path = os.path.join(settings.MEDIA_ROOT, old_file.chemin)
+                    if os.path.exists(old_file_path):
+                        try:
+                            os.remove(old_file_path)
+                        except OSError:
+                            # Log the error but continue
+                            print(f"Error removing old file: {old_file_path}")
+                    old_file.delete()
                 
-                # Handle the new file upload
-                uploaded_file = request.FILES['file']
-                file_name = uploaded_file.name
-                
-                # Generate a unique filename to prevent overwrites
-                file_extension = os.path.splitext(file_name)[1]
-                unique_filename = f"{uuid.uuid4()}{file_extension}"
-                
-                # Determine target directory based on project/subproject
-                document_dir = os.path.join(settings.MEDIA_ROOT, 'documents')
-                os.makedirs(document_dir, exist_ok=True)
-                
-                target_dir = document_dir
-                if document.id_projet:
-                    project_dir = os.path.join(document_dir, f'project_{document.id_projet.id_projet}')
-                    os.makedirs(project_dir, exist_ok=True)
-                    target_dir = project_dir
-                elif document.id_sous_projet:
-                    subproject_dir = os.path.join(document_dir, f'subproject_{document.id_sous_projet.id_sous_projet}')
-                    os.makedirs(subproject_dir, exist_ok=True)
-                    target_dir = subproject_dir
-                
-                # Save the file
-                file_path = os.path.join(target_dir, unique_filename)
-                relative_path = os.path.relpath(file_path, settings.MEDIA_ROOT)
-                
-                with open(file_path, 'wb+') as destination:
-                    for chunk in uploaded_file.chunks():
-                        destination.write(chunk)
-                
-                # Update the document path
-                document.chemin = relative_path
+                # Handle the new file uploads
+                for file in files:
+                    # Get file type and extension
+                    file_type = data.get('type', document.type).lower()
+                    file_extension = os.path.splitext(file.name)[1].lower()
+                    
+                    # Validate file type matches extension
+                    if file_type == 'pdf' and file_extension != '.pdf':
+                        return Response({
+                            'success': False,
+                            'message': 'File extension does not match specified type'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    # Create appropriate folder based on file type
+                    if file_type == 'pdf':
+                        upload_dir = os.path.join('pdfs')
+                    elif file_type in ['jpg', 'jpeg', 'png', 'gif']:
+                        upload_dir = os.path.join('images')
+                    else:
+                        upload_dir = os.path.join('other')
+
+                    # Create full path for directory
+                    full_upload_dir = os.path.join(settings.MEDIA_ROOT, upload_dir)
+                    os.makedirs(full_upload_dir, exist_ok=True)
+
+                    # Generate unique filename with timestamp and project ID
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    project_id = document.id_projet.id_projet if document.id_projet else 'unknown'
+                    new_filename = f"{timestamp}_{project_id}_{len(document.files.all())}{file_extension}"
+                    
+                    # Save the file
+                    file_path = os.path.join(full_upload_dir, new_filename)
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in file.chunks():
+                            destination.write(chunk)
+
+                    # Create document file record
+                    DocumentFile.objects.create(
+                        id_document=document,
+                        chemin=os.path.join(upload_dir, new_filename)
+                    )
             
             # Save the updated document
             document.save()
             
-            # Return the updated document
+            # Return the updated document with its files
             return Response({
                 'success': True,
                 'message': 'Document updated successfully',
@@ -584,11 +611,14 @@ class EmployerView(APIView):
                     'id_document': document.id_document,
                     'titre': document.titre,
                     'type': document.type,
-                    'chemin': document.chemin,
                     'date_ajout': document.date_ajout,
                     'description': document.description,
                     'project': document.id_projet.nom_projet if document.id_projet else None,
-                    'subproject': document.id_sous_projet.nom_sous_projet if document.id_sous_projet else None
+                    'subproject': document.id_sous_projet.nom_sous_projet if document.id_sous_projet else None,
+                    'files': [{
+                        'id_file': file.id_file,
+                        'chemin': file.chemin
+                    } for file in document.files.all()]
                 }
             }, status=status.HTTP_200_OK)
         except Exception as e:
@@ -641,7 +671,6 @@ class EmployerView(APIView):
                     'id_document': doc.id_document,
                     'titre': doc.titre,
                     'type': doc.type,
-                    'chemin': doc.chemin,
                     'date_ajout': doc.date_ajout,
                     'description': doc.description
                 })
@@ -714,7 +743,6 @@ class EmployerView(APIView):
                         'id_document': doc.id_document,
                         'titre': doc.titre,
                         'type': doc.type,
-                        'chemin': doc.chemin,
                         'date_ajout': doc.date_ajout,
                         'description': doc.description
                     })
@@ -764,7 +792,6 @@ class EmployerView(APIView):
                     'id_document': doc.id_document,
                     'titre': doc.titre,
                     'type': doc.type,
-                    'chemin': doc.chemin,
                     'date_ajout': doc.date_ajout,
                     'description': doc.description
                 })

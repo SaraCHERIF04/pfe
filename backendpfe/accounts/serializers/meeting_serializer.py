@@ -7,7 +7,13 @@ class ReunionSerializer(serializers.ModelSerializer):
         fields = [
             'id_reunion',
             'date_reunion',
-            'id_utilisateur'
+            'id_utilisateur',
+            'id_projet',
+            'heure_re',
+            'ordre_de_jour',
+            'numpv_reunion',
+            'lieu_reunion'  
+            
         ]
         read_only_fields = ['id_reunion']
 

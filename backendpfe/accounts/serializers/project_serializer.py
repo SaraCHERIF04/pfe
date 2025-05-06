@@ -9,7 +9,7 @@ class UtilisateurSerializer(serializers.ModelSerializer):
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
-        fields = ['id_document', 'titre', 'date_ajout', 'description','type','chemin']
+        fields = ['id_document', 'titre', 'date_ajout', 'description','type']
 
 class ReunionSerializer(serializers.ModelSerializer):
     class Meta:

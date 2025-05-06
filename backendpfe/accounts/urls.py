@@ -8,13 +8,18 @@ from .views import (
     SubProjectView,
     FactureView,
     UserView,
-    EmployerView
+    EmployerView,
+    FinancierView
 )
 from .views.auth_views import AuthView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views.password_setup_view import PasswordSetupView
 
 urlpatterns = [
+    # dashboards
+    path('dashboard/financier', FinancierView.as_view(), name='financier-dashboard'),
+
+
     # sign in
     path('auth/', AuthView.as_view(), name='auth'),
 
@@ -29,19 +34,19 @@ urlpatterns = [
     # Sub-Project URLs
     path('sous-projets/', SubProjectView.as_view(), name='sub_project_list'),
     path('sous-projets/<int:pk>', SubProjectView.as_view(), name='sub_project_detail'),
-    path('sous-projets/projet/<int:projet_id>/', SubProjectView.as_view(), name='sub_project_by_project'),
+    path('sous-projets/projet/<int:projet_id>', SubProjectView.as_view(), name='sub_project_by_project'),
 
     # Document URLs
-    path('document/', DocumentView.as_view(), name='document_list'),
-    path('document/<int:pk>/', DocumentView.as_view(), name='document_detail'),
+    path('documents', DocumentView.as_view(), name='document_list'),
+    path('documents/<int:pk>', DocumentView.as_view(), name='document_detail'),
 
     # Incident URLs
     path('incident/', IncidentView.as_view(), name='incident_list'),
     path('incident/<int:pk>/', IncidentView.as_view(), name='incident_detail'),
 
     # Meeting URLs
-    path('reunion/', MeetingView.as_view(), name='meeting_list'),
-    path('reunion/<int:pk>/', MeetingView.as_view(), name='meeting_detail'),
+    path('reunions', MeetingView.as_view(), name='meeting_list'),
+    path('reunions/<int:pk>', MeetingView.as_view(), name='meeting_detail'),
 
     # AP URLs (remplace les anciennes URLs de Budget par celles de AP)
     path('ap/', ApView.as_view(), name='ap_list'),  # Liste des AP
@@ -62,6 +67,18 @@ urlpatterns = [
     path('employee/incidents', EmployerView.as_view(), {'data_type': 'incidents'}, name='employer_incidents'),
     path('employee/documents', EmployerView.as_view(), {'data_type': 'documents'}, name='employer_documents'),
     path('employee/documents/<int:document_id>', EmployerView.as_view(), name='employer_document_edit'),
+    
+    # Financier URLs
+
+    path('financier/projets/', FinancierView.as_view(), name='financier-projects'),
+    path('financier/sous-projets/', FinancierView.as_view(), name='financier-subprojects'),
+    path('financier/reunions/', FinancierView.as_view(), name='financier-reunions'),
+    path('financier/documents/', FinancierView.as_view(), name='financier-documents'),
+    path('financier/factures/', FinancierView.as_view(), name='financier-factures'),
+    path('financier/documents/add/', FinancierView.as_view(), name='financier-add-document'),
+    path('financier/factures/add/', FinancierView.as_view(), name='financier-add-facture'),
+    path('financier/documents/<int:id>/edit/', FinancierView.as_view(), name='financier-edit-document'),
+    path('financier/factures/<int:id>/edit/', FinancierView.as_view(), name='financier-edit-facture'),
     
     # sign up
     # path('accounts/create/', create_account, name='create_account'),
