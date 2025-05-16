@@ -370,7 +370,7 @@ class Utilisateur(models.Model):
     email = models.CharField(unique=True, max_length=100)
     mot_de_passe = models.CharField(max_length=255, blank=True, null=True)
     role_de_utilisateur = models.CharField(max_length=50)
-    numero_de_tel = models.CharField(unique=True, max_length=10, blank=True, null=True)
+    numero_de_tel = models.CharField(unique=True, max_length=20, blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
     sexe = models.CharField(db_column='Sexe', max_length=10, blank=True, null=True)  # Field name made lowercase.
     etat = models.CharField(db_column='Etat', max_length=20, blank=True, null=True)  # Field name made lowercase.

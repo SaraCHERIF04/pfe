@@ -7,7 +7,7 @@ class IsAdmin(BasePermission):
 
 class IsChefDeProjet(BasePermission):
     def has_permission(self, request, view):
-        return hasattr(request.user, 'role_de_utilisateur') and request.user.role_de_utilisateur == 'chef de projet'
+        return hasattr(request.user, 'role_de_utilisateur') and request.user.role_de_utilisateur == 'chef'
 
 
 class IsEmployee(BasePermission):
@@ -17,3 +17,7 @@ class IsEmployee(BasePermission):
 class IsFinancier(BasePermission):
     def has_permission(self, request, view):
         return hasattr(request.user, 'role_de_utilisateur') and request.user.role_de_utilisateur == 'financier'
+
+class IsDirecteur(BasePermission):
+    def has_permission(self, request, view):
+        return hasattr(request.user, 'role_de_utilisateur') and request.user.role_de_utilisateur == 'directeur'

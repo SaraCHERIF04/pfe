@@ -12,6 +12,7 @@ from .views import (
     FinancierView
 )
 from .views.auth_views import AuthView
+from .views.chef_view import ChefView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views.password_setup_view import PasswordSetupView
 
@@ -25,10 +26,10 @@ urlpatterns = [
 
     # User URLs
     path('users', UserView.as_view(), name='user-list'),
-    path('users/<int:pk>/', UserView.as_view(), name='user-detail'),
+    path('users/<int:pk>', UserView.as_view(), name='user-detail'),
 
     # Project URLs
-    path('projets/', ProjectView.as_view(), name='project_list'),
+    path('projets', ProjectView.as_view(), name='project_list'),
     path('projets/<int:pk>', ProjectView.as_view(), name='project_detail'),
 
     # Sub-Project URLs
@@ -37,10 +38,12 @@ urlpatterns = [
     path('sous-projets/projet/<int:projet_id>', SubProjectView.as_view(), name='sub_project_by_project'),
 
     # Document URLs
+    path('documents/ajout', DocumentView.as_view(), name='document_list'),
     path('documents', DocumentView.as_view(), name='document_list'),
     path('documents/<int:pk>', DocumentView.as_view(), name='document_detail'),
 
     # Incident URLs
+    path('incident/ajout', IncidentView.as_view(), name='incident_ajout'),
     path('incident/', IncidentView.as_view(), name='incident_list'),
     path('incident/<int:pk>/', IncidentView.as_view(), name='incident_detail'),
 
@@ -69,7 +72,6 @@ urlpatterns = [
     path('employee/documents/<int:document_id>', EmployerView.as_view(), name='employer_document_edit'),
     
     # Financier URLs
-
     path('financier/projets/', FinancierView.as_view(), name='financier-projects'),
     path('financier/sous-projets/', FinancierView.as_view(), name='financier-subprojects'),
     path('financier/reunions/', FinancierView.as_view(), name='financier-reunions'),
@@ -79,9 +81,20 @@ urlpatterns = [
     path('financier/factures/add/', FinancierView.as_view(), name='financier-add-facture'),
     path('financier/documents/<int:id>/edit/', FinancierView.as_view(), name='financier-edit-document'),
     path('financier/factures/<int:id>/edit/', FinancierView.as_view(), name='financier-edit-facture'),
-    
+
+
+    # Chef URLs
+    path('chef/dashboard', ChefView.as_view(), name='chef_dashboard'),
+    path('chef/projets', ChefView.as_view(), {'data_type': 'projects'}, name='chef_projects'),
+    path('chef/sous-projets', ChefView.as_view(), {'data_type': 'subprojects'}, name='chef_subprojects'),
+    path('chef/reunions', ChefView.as_view(), {'data_type': 'reunions'}, name='chef_reunions'),
+    path('chef/incidents', ChefView.as_view(), {'data_type': 'incidents'}, name='chef_incidents'),
+    path('chef/documents', ChefView.as_view(), {'data_type': 'documents'}, name='chef_documents'),
+    path('chef/documents/add', ChefView.as_view(), {'data_type': 'documents'}, name='chef_add_document'),
+    path('chef/documents/<int:document_id>', ChefView.as_view(), name='chef_document_edit'),
+
     # sign up
     # path('accounts/create/', create_account, name='create_account'),
     # path('projects/create/', CreateProjectView.as_view(), name='create_project'),
-    path('set-password/', PasswordSetupView.as_view(), name='set-password'),
+    path('set-password', PasswordSetupView.as_view(), name='set-password'),
 ]

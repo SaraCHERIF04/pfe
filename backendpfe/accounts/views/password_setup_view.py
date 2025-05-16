@@ -5,7 +5,7 @@ from ..models import Utilisateur
 from ..services.token_service import TokenService
 from django.contrib.auth.hashers import make_password
 
-class PasswordSetupView(APIView):
+class   PasswordSetupView(APIView):
     def post(self, request):
         token = request.data.get('token')
         if not token:

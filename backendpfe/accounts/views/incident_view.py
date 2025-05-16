@@ -58,6 +58,7 @@ class IncidentView(APIView):
         return paginated_response
 
     def post(self, request):
+        
         serializer = IncidentSerializer(data=request.data)
         if serializer.is_valid():
             incident = serializer.save()

@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-from ..models import Utilisateur
+from ..models import Utilisateur, Employe, Chefprojet, Directeur, Financier
 from ..serializers.utilisateur_serializer import UtilisateurSerializer
 from ..services.notification_service import NotificationService
 from ..services.email_service import EmailService
@@ -89,6 +89,27 @@ class UserView(APIView):
             user = serializer.save()
             
             token = TokenService.generate_token(user.id_utilisateur)
+            
+            # Create role-specific record based on user role
+            if user.role_de_utilisateur == 'employee':
+                Employe.objects.create(
+                    id_utilisateur=user,
+                )
+            elif user.role_de_utilisateur == 'chef':
+                Chefprojet.objects.create(
+                    id_utilisateur=user,
+                   
+                )
+            elif user.role_de_utilisateur == 'directeur':
+                Directeur.objects.create(
+                    id_utilisateur=user,
+                  
+                )
+            elif user.role_de_utilisateur == 'financier':
+                Financier.objects.create(
+                    id_utilisateur=user,
+          
+                )
             
             try:
                 EmailService.send_password_setup_email(user.email, token)

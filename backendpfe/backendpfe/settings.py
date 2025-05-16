@@ -63,7 +63,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'accounts.Utilisateur'
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=3),  
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     
     'ROTATE_REFRESH_TOKENS': True,                   
     'BLACKLIST_AFTER_ROTATION': True,                
@@ -143,9 +143,10 @@ else:
         }
     }
 
+# Looking to send emails in production? Check out our Email API/SMTP product!
 EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
-EMAIL_HOST_USER = '089f45f65f0d16'
-EMAIL_HOST_PASSWORD = '3705254c9a917d'
+EMAIL_HOST_USER = '4a036567466f28'
+EMAIL_HOST_PASSWORD = '3b469ae6994a08'
 EMAIL_PORT = '2525'
 
 # Password validation
