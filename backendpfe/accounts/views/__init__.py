@@ -9,6 +9,7 @@ from .facture_view import FactureView
 from .user_view import UserView
 from .employer_view import EmployerView
 from .financier_view import FinancierView
+from .marche_view import MarcheView
 
 all = [
     'ProjectView',
