@@ -9,7 +9,8 @@ from .views import (
     FactureView,
     UserView,
     EmployerView,
-    FinancierView
+    FinancierView,
+    MarcheView
 )
 from .views.auth_views import AuthView
 from .views.chef_view import ChefView
@@ -20,6 +21,9 @@ urlpatterns = [
     # dashboards
     path('dashboard/financier', FinancierView.as_view(), name='financier-dashboard'),
 
+    # Marche URLs
+    path('marches', MarcheView.as_view(), name='marche_list'),
+    path('marches/<int:pk>', MarcheView.as_view(), name='marche_detail'),
 
     # sign in
     path('auth/', AuthView.as_view(), name='auth'),
