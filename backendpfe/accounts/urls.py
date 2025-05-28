@@ -4,16 +4,22 @@ from .views import (
     DocumentView,
     IncidentView,
     MeetingView,
-    ApView,  # Remplacement de BudgetView par ApView
+    # ApView,  # Remplacement de BudgetView par ApView
     SubProjectView,
     FactureView,
     UserView,
     EmployerView,
     FinancierView,
-    MarcheView
+    MarcheView,
+
+    ResponsableDashboardView
 )
+
 from .views.auth_views import AuthView
-from .views.chef_view import ChefView
+from .views.maitre_doeuvre_view import MaitreDoeuvreView  
+from .views.employer_view import EmployeeDashboardView
+from .views.chef_view import ChefView, ChefDashboardView, ChefProjectDetailView
+
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views.password_setup_view import PasswordSetupView
 
@@ -56,13 +62,14 @@ urlpatterns = [
     path('reunions/<int:pk>', MeetingView.as_view(), name='meeting_detail'),
 
     # AP URLs (remplace les anciennes URLs de Budget par celles de AP)
-    path('ap/', ApView.as_view(), name='ap_list'),  # Liste des AP
-    path('ap/<int:pk>/', ApView.as_view(), name='ap_detail'),  # Détail d'un AP
+    # path('ap/', ApView.as_view(), name='ap_list'),  # Liste des AP
+    # path('ap/<int:pk>/', ApView.as_view(), name='ap_detail'),  # Détail d'un AP
 
     
     # Facture URLs
-    path('facture/', FactureView.as_view(), name='facture_list'),  # Liste des factures
-    path('facture/<int:pk>/', FactureView.as_view(), name='facture_detail'),  # Détail d'une facture
+    path('factures', FactureView.as_view(), name='facture_list'),  # Liste des factures
+    path('financier/factures', FactureView.as_view(), name='facture_list'),  # Liste des factures
+    path('factures/<int:pk>', FactureView.as_view(), name='facture_detail'),  # Détail d'une facture
     path('facture/projet/<int:projet_id>/', FactureView.as_view(), name='facture_by_project'),
     path('facture/sous-projet/<int:sous_projet_id>/', FactureView.as_view(), name='facture_by_sub_project'),  # Factures par sous-projet
     
@@ -88,7 +95,7 @@ urlpatterns = [
 
 
     # Chef URLs
-    path('chef/dashboard', ChefView.as_view(), name='chef_dashboard'),
+    # path('chef/dashboard', ChefView.as_view(), name='chef_dashboard'),
     path('chef/projets', ChefView.as_view(), {'data_type': 'projects'}, name='chef_projects'),
     path('chef/sous-projets', ChefView.as_view(), {'data_type': 'subprojects'}, name='chef_subprojects'),
     path('chef/reunions', ChefView.as_view(), {'data_type': 'reunions'}, name='chef_reunions'),
@@ -96,7 +103,15 @@ urlpatterns = [
     path('chef/documents', ChefView.as_view(), {'data_type': 'documents'}, name='chef_documents'),
     path('chef/documents/add', ChefView.as_view(), {'data_type': 'documents'}, name='chef_add_document'),
     path('chef/documents/<int:document_id>', ChefView.as_view(), name='chef_document_edit'),
+    path('chef/dashboard/', ChefDashboardView.as_view(), name='chef-dashboard'),
+    path('chef/project/<int:project_id>/', ChefProjectDetailView.as_view(), name='chef-project-detail'),
+    path('responsable/dashboard/', ResponsableDashboardView.as_view(), name='responsable-dashboard'),
+    path('employee/dashboard/', EmployeeDashboardView.as_view(), name='employee-enhanced-dashboard'),
 
+
+    path('maitre-doeuvre/', MaitreDoeuvreView.as_view(), name='maitre_doeuvre_list'),
+    # path('maitre-doeuvre/<int:pk>/', MaitreDoeuvreView.as_view(), name='maitre_doeuvre_detail'),
+    # path('maitre-doeuvre/projet/<int:projet_id>/', MaitreDoeuvreView.as_view(), name='maitre_doeuvre_by_project'),
     # sign up
     # path('accounts/create/', create_account, name='create_account'),
     # path('projects/create/', CreateProjectView.as_view(), name='create_project'),

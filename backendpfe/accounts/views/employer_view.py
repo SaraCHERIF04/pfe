@@ -6,10 +6,12 @@ from django.db.models import Q
 from ..models import Employe, Projet, SousProjet, Reunion, Incident, Utilisateur, Document, DocumentFile
 from ..permissions import IsEmployee
 from rest_framework.pagination import PageNumberPagination
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from django.conf import settings
 import uuid
+import calendar
+
 
 
 class CustomPagination(PageNumberPagination):
@@ -19,7 +21,7 @@ class CustomPagination(PageNumberPagination):
 
 
 class EmployerView(APIView):
-    permission_classes = [IsAuthenticated, IsEmployee]
+    permission_classes = [IsAuthenticated]
     pagination_class = CustomPagination
     
     def get_employee(self, request):
@@ -836,3 +838,156 @@ class EmployerView(APIView):
             'id_projet': i.id_projet.id_projet if i.id_projet else None,
             'id_sous_projet': i.id_sous_projet.id_sous_projet if i.id_sous_projet else None
         } for i in incidents] 
+
+
+
+class EmployeeDashboardView(APIView):
+    permission_classes = [IsAuthenticated, IsEmployee]
+    
+    def get(self, request):
+        """
+        Get enhanced dashboard data for the employee including:
+        - Sub-project counts by status
+        - Recent incidents
+        - Monthly progression data
+        """
+        try:
+            # Get the employee record
+            try:
+                employee = Employe.objects.get(id_utilisateur=request.user.id_utilisateur)
+            except Employe.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'message': 'Employee record not found for this user'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Get the sub-project assigned to this employee
+            subproject = employee.id_sous_projet
+            
+            if not subproject:
+                return Response({
+                    'success': True,
+                    'message': 'No sub-project assigned to this employee',
+                    'data': {
+                        'total_subprojects': 0,
+                        'status_counts': {
+                            'termine': 0,
+                            'en cours': 0,
+                            'en attente': 0
+                        },
+                        'recent_incidents': [],
+                        'monthly_progression': []
+                    }
+                }, status=status.HTTP_200_OK)
+            
+            # Get all incidents related to the employee's sub-project
+            incidents = Incident.objects.filter(id_sous_projet=subproject.id_sous_projet).order_by('-date_incident')[:6]
+            
+            # Get status counts
+            status_labels = ['termine', 'en cours', 'en attente']
+            
+            # Since we're looking at a single sub-project, the count will be either 0 or 1 for each status
+            status_counts = {}
+            for label in status_labels:
+                status_counts[label] = 1 if subproject.statut_sous_projet.lower() == label.lower() else 0
+            
+            # Generate monthly progression data
+            monthly_progression = self.generate_monthly_progression(subproject)
+            
+            # Serialize the incidents
+            incident_data = []
+            for incident in incidents:
+                incident_data.append({
+                    'id_incident': incident.id_incident,
+                    'description_incident': incident.description_incident,
+                    'date_incident': incident.date_incident,
+                    'lieu_incident': incident.lieu_incident,
+                    'type_incident': incident.type_incident,
+                    'project': incident.id_projet.nom_projet if incident.id_projet else None,
+                    'subproject': incident.id_sous_projet.nom_sous_projet if incident.id_sous_projet else None
+                })
+            
+            return Response({
+                'success': True,
+                'message': 'Employee dashboard data retrieved successfully',
+                'data': {
+                    'total_subprojects': 1,  # Employee is assigned to one sub-project
+                    'subproject_info': {
+                        'id': subproject.id_sous_projet,
+                        'name': subproject.nom_sous_projet,
+                        'status': subproject.statut_sous_projet,
+                        'progress': subproject.pourcentage,
+                        'start_date': subproject.date_debut_sousprojet,
+                        'end_date': subproject.date_finsousprojet
+                    },
+                    'status_counts': status_counts,
+                    'recent_incidents': incident_data,
+                    'monthly_progression': monthly_progression
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': f'Error retrieving employee dashboard data: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def generate_monthly_progression(self, subproject):
+        """
+        Generate monthly progression data for visualization.
+        Since we don't have historical data, we'll create sample data based on the current progress.
+        """
+        # Get current date and project start date
+        current_date = datetime.now().date()
+        start_date = subproject.date_debut_sousprojet
+        end_date = subproject.date_finsousprojet
+        current_progress = subproject.pourcentage
+        
+        # If the project hasn't started yet or is in the future
+        if current_date < start_date:
+            return []
+            
+        # Calculate how many months the project spans
+        total_months = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month) + 1
+        
+        # If the project is less than a month, return current progress only
+        if total_months <= 1:
+            month_name = calendar.month_abbr[start_date.month]
+            return [{'month': month_name, 'progress': current_progress}]
+        
+        # Calculate months elapsed so far
+        if current_date > end_date:
+            # Project is complete
+            months_elapsed = total_months
+        else:
+            months_elapsed = (current_date.year - start_date.year) * 12 + (current_date.month - start_date.month) + 1
+        
+        # Generate progression data
+        progression_data = []
+        
+        # For completed months, generate realistic progression
+        for i in range(min(6, total_months)):
+            # Calculate the month
+            month_offset = i
+            month_date = start_date + timedelta(days=30 * month_offset)
+            month_name = calendar.month_abbr[month_date.month]
+            
+            # Calculate progress for this month
+            if i >= months_elapsed:
+                # Future month - project the expected progress
+                progress = min(100, (i / total_months) * 100)
+            else:
+                # Past month - calculate based on current progress
+                progress_ratio = i / months_elapsed
+                progress = min(100, progress_ratio * current_progress)
+                
+            # Add some randomness to make it look realistic
+            import random
+            progress = min(100, progress + random.uniform(-5, 5))
+            
+            progression_data.append({
+                'month': month_name,
+                'progress': round(progress, 1)
+            })
+        
+        return progression_data

@@ -46,7 +46,7 @@ class FactureView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         serializer = FactureSerializer(facture)
-        return SuccessAPIResponse({
+        return Response({
             'success': True,
             'message': 'Facture retrieved successfully',
             'data': serializer.data
@@ -55,7 +55,7 @@ class FactureView(APIView):
     def get_all_factures(self):
         factures = Facture.objects.all()
         serializer = FactureSerializer(factures, many=True)
-        return SuccessAPIResponse({
+        return Response({
             'success': True,
             'message': 'Factures retrieved successfully',
             'data': serializer.data
@@ -65,13 +65,13 @@ class FactureView(APIView):
         serializer = FactureSerializer(data=request.data)
         if serializer.is_valid():
             facture = serializer.save()
-            return SuccessAPIResponse({
+            return Response({
                 'success': True,
                 'message': 'Facture created successfully',
                 'data': FactureSerializer(facture).data
             }, status=status.HTTP_201_CREATED)
 
-        return ErrorAPIResponse({
+        return Response({
             'success': False,
             'message': 'Invalid data',
             'errors': serializer.errors
@@ -80,7 +80,7 @@ class FactureView(APIView):
     def put(self, request, pk):
         facture = self.get_object(pk)
         if not facture:
-            return ErrorAPIResponse({
+            return Response({
                 'success': False,
                 'message': 'Facture not found'
             }, status=status.HTTP_404_NOT_FOUND)
@@ -88,7 +88,7 @@ class FactureView(APIView):
         serializer = FactureSerializer(facture, data=request.data)
         if serializer.is_valid():
             facture = serializer.save()
-            return SuccessAPIResponse({
+            return Response({
                 'success': True,
                 'message': 'Facture updated successfully',
                 'data': FactureSerializer(facture).data
@@ -103,13 +103,13 @@ class FactureView(APIView):
     def delete(self, request, pk):
         facture = self.get_object(pk)
         if not facture:
-            return ErrorAPIResponse({
+            return Response({
                 'success': False,
                 'message': 'Facture not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
         facture.delete()
-        return SuccessAPIResponse({
+        return Response({
             'success': True,
             'message': 'Facture deleted successfully'
         }, status=status.HTTP_204_NO_CONTENT)
@@ -120,7 +120,7 @@ class FactureView(APIView):
 
         paginated_response = self.get_paginated_response(serializer.data)
         if isinstance(paginated_response, Response):
-            return SuccessAPIResponse({
+            return Response({
                 'success': True,
                 'message': 'Factures retrieved successfully',
                 'data': paginated_response.data
@@ -134,7 +134,7 @@ class FactureView(APIView):
 
         paginated_response = self.get_paginated_response(serializer.data)
         if isinstance(paginated_response, Response):
-            return SuccessAPIResponse({
+            return Response({
                 'success': True,
                 'message': 'Factures retrieved successfully',
                 'data': paginated_response.data
