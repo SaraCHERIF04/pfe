@@ -11,6 +11,7 @@ from .employer_view import EmployerView
 from .financier_view import FinancierView
 from .marche_view import MarcheView
 
+
 all = [
     'ProjectView',
     'DocumentView',
@@ -21,5 +22,6 @@ all = [
     'AuthView',
     'FactureView',
     'UserView',
-    'EmployerView'
+    'EmployerView',
+    'MarcheView'
 ]
