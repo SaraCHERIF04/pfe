@@ -1,7 +1,14 @@
 from rest_framework import serializers
-from ..models import Facture, Projet, SousProjet
+from ..models import Facture, Projet, SousProjet, MaitreDoeuve
+
+class MaitreDoeuveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MaitreDoeuve
+        fields = ['nom_fournisseur', 'prenom_fournisseur']
 
 class FactureSerializer(serializers.ModelSerializer):
+    fournisseur = MaitreDoeuveSerializer(source='id_md', read_only=True)
+
     class Meta:
         model = Facture
         fields = [
@@ -14,15 +21,12 @@ class FactureSerializer(serializers.ModelSerializer):
             'montant_net_ht',
             'montant_tva',
             'montant_ttc',
-            'date_ordre_virement',
-            'numero_ordre_virement',
             'id_projet',
             'id_sous_projet',
-            'id_marche',
-            'id_ap',
-            'id_md'
+            'id_md',
+            'fournisseur'
         ]
-        read_only_fields = ['id_facture']
+        read_only_fields = ['id_facture', 'fournisseur']
 
     def validate(self, data):
         # Validation que la date de facturation ne soit pas postérieure à la date de réception

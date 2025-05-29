@@ -9,6 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime
 import os
 from django.conf import settings
+from ..serializers.facture_serializer import FactureSerializer
 
 
 class CustomPagination(PageNumberPagination):
@@ -484,7 +485,7 @@ class FinancierView(APIView):
             data = request.data
             
             # Validate required fields
-            required_fields = ['numero_facture', 'montant', 'date_facture', 'description']
+            required_fields = ['numero_facture', 'designation', 'date_facturation', 'date_reception', 'brut_ht', 'montant_net_ht', 'montant_tva', 'montant_ttc']
             for field in required_fields:
                 if field not in data or not data[field]:
                     return Response({
@@ -493,61 +494,65 @@ class FinancierView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
             
             # Check that at least one of project_id or subproject_id is provided
-            if 'project_id' not in data and 'subproject_id' not in data:
+            if 'id_projet' not in data and 'id_sous_projet' not in data:
                 return Response({
                     'success': False,
-                    'message': 'Either project_id or subproject_id must be provided'
+                    'message': 'Either id_projet or id_sous_projet must be provided'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Get project and subproject
             project = None
             subproject = None
             
-            if 'project_id' in data and data['project_id']:
+            if 'id_projet' in data and data['id_projet']:
                 try:
-                    project = Projet.objects.get(id_projet=data['project_id'])
+                    project = Projet.objects.get(id_projet=data['id_projet'])
                 except Projet.DoesNotExist:
                     return Response({
                         'success': False,
                         'message': 'Project not found'
                     }, status=status.HTTP_404_NOT_FOUND)
             
-            if 'subproject_id' in data and data['subproject_id']:
+            if 'id_sous_projet' in data and data['id_sous_projet']:
                 try:
-                    subproject = SousProjet.objects.get(id_sous_projet=data['subproject_id'])
+                    subproject = SousProjet.objects.get(id_sous_projet=data['id_sous_projet'])
                 except SousProjet.DoesNotExist:
                     return Response({
                         'success': False,
                         'message': 'Subproject not found'
                     }, status=status.HTTP_404_NOT_FOUND)
 
-            # Create the invoice
-            facture_data = {
+            # Create the invoice using the serializer
+            serializer = FactureSerializer(data={
                 'numero_facture': data['numero_facture'],
-                'montant': data['montant'],
-                'date_facture': data['date_facture'],
-                'description': data['description'],
-                'id_projet': project,
-                'id_sous_projet': subproject,
-                'statut': data.get('statut', 'en_attente')
-            }
+                'designation': data['designation'],
+                'date_facturation': data['date_facturation'],
+                'date_reception': data['date_reception'],
+                'brut_ht': data['brut_ht'],
+                'montant_net_ht': data['montant_net_ht'],
+                'montant_tva': data['montant_tva'],
+                'montant_ttc': data['montant_ttc'],
+                'date_ordre_virement': data.get('date_ordre_virement'),
+                'numero_ordre_virement': data.get('numero_ordre_virement'),
+                'id_projet': project.id_projet if project else None,
+                'id_sous_projet': subproject.id_sous_projet if subproject else None,
+                'id_md': data.get('id_md')
+            })
 
-            facture = Facture.objects.create(**facture_data)
+            if serializer.is_valid():
+                facture = serializer.save()
+                return Response({
+                    'success': True,
+                    'message': 'Invoice added successfully',
+                    'data': serializer.data
+                }, status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    'success': False,
+                    'message': 'Invalid data',
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({
-                'success': True,
-                'message': 'Invoice added successfully',
-                'data': {
-                    'id_facture': facture.id_facture,
-                    'numero_facture': facture.numero_facture,
-                    'montant': facture.montant,
-                    'date_facture': facture.date_facture,
-                    'description': facture.description,
-                    'statut': facture.statut,
-                    'project': facture.id_projet.nom_projet if facture.id_projet else None,
-                    'subproject': facture.id_sous_projet.nom_sous_projet if facture.id_sous_projet else None
-                }
-            }, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({
                 'success': False,
@@ -675,10 +680,15 @@ class FinancierView(APIView):
         return [{
             'id_facture': f.id_facture,
             'numero_facture': f.numero_facture,
-            'montant': f.montant,
-            'date_facture': f.date_facture,
-            'description': f.description,
-            'statut': f.statut,
+            'designation': f.designation,
+            'date_facturation': f.date_facturation,
+            'date_reception': f.date_reception,
+            'brut_ht': f.brut_ht,
+            'montant_net_ht': f.montant_net_ht,
+            'montant_tva': f.montant_tva,
+            'montant_ttc': f.montant_ttc,
+            'date_ordre_virement': f.date_ordre_virement,
+            'numero_ordre_virement': f.numero_ordre_virement,
             'project': {
                 'id_projet': f.id_projet.id_projet,
                 'nom_projet': f.id_projet.nom_projet
@@ -686,5 +696,9 @@ class FinancierView(APIView):
             'subproject': {
                 'id_sous_projet': f.id_sous_projet.id_sous_projet,
                 'nom_sous_projet': f.id_sous_projet.nom_sous_projet
-            } if f.id_sous_projet else None
+            } if f.id_sous_projet else None,
+            'fournisseur': {
+                'nom_fournisseur': f.id_md.nom_fournisseur,
+                'prenom_fournisseur': f.id_md.prenom_fournisseur
+            } if f.id_md else None
         } for f in factures] 

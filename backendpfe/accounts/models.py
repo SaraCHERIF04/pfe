@@ -16,14 +16,14 @@ class Administrateur(models.Model):
         db_table = 'administrateur'
 
 
-class Ap(models.Model):
-    id_ap = models.AutoField(primary_key=True)
-    montant_ap = models.DecimalField(max_digits=65, decimal_places=30, blank=True, null=True)
-    id_projet = models.ForeignKey('Projet', models.DO_NOTHING, db_column='id_projet', blank=True, null=True)
+# class Ap(models.Model):
+#     id_ap = models.AutoField(primary_key=True)
+#     montant_ap = models.DecimalField(max_digits=65, decimal_places=30, blank=True, null=True)
+#     id_projet = models.ForeignKey('Projet', models.DO_NOTHING, db_column='id_projet', blank=True, null=True)
 
-    class Meta:
-        managed = False
-        db_table = 'ap'
+#     class Meta:
+#         managed = False
+#         db_table = 'ap'
 
 
 class AuthGroup(models.Model):
@@ -227,7 +227,7 @@ class Facture(models.Model):
     id_projet = models.ForeignKey('Projet', models.DO_NOTHING, db_column='id_projet', blank=True, null=True)
     id_sous_projet = models.ForeignKey('SousProjet', models.DO_NOTHING, db_column='id_sous_projet', blank=True, null=True)
     id_marche = models.ForeignKey('Marche', models.DO_NOTHING, db_column='id_marche', blank=True, null=True)
-    id_ap = models.ForeignKey(Ap, models.DO_NOTHING, db_column='id_ap', blank=True, null=True)
+    # id_ap = models.ForeignKey(Ap, models.DO_NOTHING, db_column='id_ap', blank=True, null=True)
     id_md = models.ForeignKey('MaitreDoeuve', models.DO_NOTHING, db_column='id_md', blank=True, null=True)
 
     class Meta:
@@ -264,7 +264,6 @@ class Incident(models.Model):
 
 class MaitreDoeuve(models.Model):
     id_md = models.AutoField(primary_key=True)
-    id_projet = models.ForeignKey('Projet', models.DO_NOTHING, db_column='id_projet', blank=True, null=True)
     nom_fournisseur = models.CharField(max_length=30, blank=True, null=True)
     prenom_fournisseur = models.CharField(max_length=30, blank=True, null=True)
 
@@ -314,6 +313,7 @@ class Projet(models.Model):
     description_de_projet = models.CharField(max_length=30)
     date_debut_de_projet = models.DateField()
     date_fin_de_projet = models.DateField()
+    ap = models.FloatField()
     status = models.CharField(max_length=30)
     id_utilisateur = models.ForeignKey(Chefprojet, models.DO_NOTHING, db_column='id_utilisateur', blank=True, null=True)
 
@@ -342,6 +342,7 @@ class SousProjet(models.Model):
     nom_sous_projet = models.CharField(max_length=30)
     date_debut_sousprojet = models.DateField()
     date_finsousprojet = models.DateField()
+    pourcentage = models.FloatField()
     statut_sous_projet = models.CharField(max_length=15)
     id_projet = models.ForeignKey(Projet, models.DO_NOTHING, db_column='id_projet', blank=True, null=True)
     description_sous_projet = models.CharField(max_length=2000, blank=True, null=True)

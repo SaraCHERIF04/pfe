@@ -40,7 +40,7 @@ class MaitreDoeuvreView(APIView):
                 'message': "Maitre d'oeuvre not found"
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = MaitreDoeuveSerializer(md)
+        serializer = MaitreDoeuvreSerializer(md)
         return Response({
             'success': True,
             'message': "Maitre d'oeuvre retrieved successfully",
@@ -49,7 +49,7 @@ class MaitreDoeuvreView(APIView):
 
     def get_all(self):
         mds = MaitreDoeuve.objects.all()
-        serializer = MaitreDoeuveSerializer(mds, many=True)
+        serializer = MaitreDoeuvreSerializer(mds, many=True)
         return Response({
             'success': True,
             'message': "Maitre d'oeuvre list retrieved successfully",
@@ -57,13 +57,13 @@ class MaitreDoeuvreView(APIView):
         }, status=status.HTTP_200_OK)
 
     def post(self, request):
-        serializer = MaitreDoeuveSerializer(data=request.data)
+        serializer = MaitreDoeuvreSerializer(data=request.data)
         if serializer.is_valid():
             md = serializer.save()
             return Response({
                 'success': True,
                 'message': "Maitre d'oeuvre created successfully",
-                'data': MaitreDoeuveSerializer(md).data
+                'data': MaitreDoeuvreSerializer(md).data
             }, status=status.HTTP_201_CREATED)
 
         return Response({
@@ -80,13 +80,13 @@ class MaitreDoeuvreView(APIView):
                 'message': "Maitre d'oeuvre not found"
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = MaitreDoeuveSerializer(md, data=request.data)
+        serializer = MaitreDoeuvreSerializer(md, data=request.data)
         if serializer.is_valid():
             md = serializer.save()
             return Response({
                 'success': True,
                 'message': "Maitre d'oeuvre updated successfully",
-                'data': MaitreDoeuveSerializer(md).data
+                'data': MaitreDoeuvreSerializer(md).data
             }, status=status.HTTP_200_OK)
 
         return Response({
@@ -111,7 +111,7 @@ class MaitreDoeuvreView(APIView):
 
     def get_by_projet_id(self, request, projet_id):
         mds = MaitreDoeuve.objects.filter(id_projet=projet_id)
-        serializer = MaitreDoeuveSerializer(mds, many=True)
+        serializer = MaitreDoeuvreSerializer(mds, many=True)
         paginated_response = self.get_paginated_response(serializer.data)
         if isinstance(paginated_response, Response):
             return Response({

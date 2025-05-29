@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import Projet, Ap, Utilisateur, Document, Employe, SousProjet, Reunion
+from ..models import Projet, Utilisateur, Document, Employe, SousProjet, Reunion
 
 class UtilisateurSerializer(serializers.ModelSerializer):
     class Meta:

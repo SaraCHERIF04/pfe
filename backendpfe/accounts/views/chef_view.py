@@ -10,6 +10,7 @@ from datetime import datetime
 import os
 from django.conf import settings
 import uuid
+from django.db import models
 
 
 class CustomPagination(PageNumberPagination):
@@ -821,4 +822,193 @@ class ChefView(APIView):
             'type_incident': i.type_incident,
             'id_projet': i.id_projet.id_projet if i.id_projet else None,
             'id_sous_projet': i.id_sous_projet.id_sous_projet if i.id_sous_projet else None
-        } for i in incidents] 
+        } for i in incidents]
+
+class ChefDashboardView(APIView):
+    permission_classes = [IsAuthenticated, IsChefDeProjet]
+
+    def get(self, request):
+        try:
+            # Replicating get_chef logic for a standalone view
+            utilisateur_id = getattr(request.user, 'id_utilisateur', None)
+            if not utilisateur_id:
+                return Response({"error": "Utilisateur not found."}, status=status.HTTP_404_NOT_FOUND)
+
+            chef = Chefprojet.objects.get(id_utilisateur=utilisateur_id)
+        except Chefprojet.DoesNotExist:
+            return Response({"error": "Chef de projet not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        projects = Projet.objects.filter(id_utilisateur=chef)
+        project_ids = projects.values_list('id_projet', flat=True)
+        sub_projects = SousProjet.objects.filter(id_projet__in=project_ids)
+        sub_project_ids = sub_projects.values_list('id_sous_projet', flat=True)
+
+        incident_qs = Incident.objects.filter(
+            models.Q(id_projet__in=project_ids) | models.Q(id_sous_projet__in=sub_project_ids)
+        )
+        incident_count = incident_qs.count()
+
+        last_5_incidents = incident_qs.order_by('-date_incident')[:5]
+        last_5_incidents_data = [
+            {
+                'id': inc.id_incident,
+                'description': inc.description_incident,
+                'date': inc.date_incident,
+                'project_id': inc.id_projet_id,
+                'sub_project_id': inc.id_sous_projet_id,
+                'lieu': inc.lieu_incident,
+                'type': inc.type_incident,
+            }
+            for inc in last_5_incidents
+        ]
+
+        total_budget = projects.aggregate(total=models.Sum('ap'))['total'] or 0
+        status_labels = ['Terminé', 'En cours', 'En attente', 'Suspendu']
+        dashboard_data = []
+        for project in projects:
+            sps = SousProjet.objects.filter(id_projet=project)
+            avg_progress = sps.aggregate(avg=models.Avg('pourcentage'))['avg'] or 0
+            status_counts = {label: sps.filter(statut_sous_projet=label).count() for label in status_labels}
+            timeline = [
+                {
+                    "id": sp.id_sous_projet,
+                    "title": sp.nom_sous_projet,
+                    "startDate": sp.date_debut_sousprojet,
+                    "endDate": sp.date_finsousprojet,
+                    "progress": sp.pourcentage,
+                    "status": sp.statut_sous_projet
+                }
+                for sp in sps
+            ]
+            dashboard_data.append({
+                "project_id": project.id_projet,
+                "project_name": project.nom_projet,
+                "average_progress": avg_progress,
+                "status_counts": status_counts,
+                "timeline": timeline,
+                "budget": project.ap,
+            })
+
+        # Create separate project timeline
+        project_timeline = [
+            {
+                "id": project.id_projet,
+                "title": project.nom_projet,
+                "startDate": project.date_debut_de_projet,
+                "endDate": project.date_fin_de_projet,
+                "status": project.status,
+                "budget": project.ap
+            }
+            for project in projects
+        ]
+
+        return Response({
+            "total_projects": projects.count(),
+            "total_sub_projects": sub_projects.count(),
+            "total_incidents": incident_count,
+            "total_budget": total_budget,
+            "last_5_incidents": last_5_incidents_data,
+            "projects": dashboard_data,
+            "project_timeline": project_timeline
+        }) 
+
+
+class ChefProjectDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsChefDeProjet]
+
+    def get(self, request, project_id):
+        try:
+            # Get the current user
+            utilisateur_id = getattr(request.user, 'id_utilisateur', None)
+            if not utilisateur_id:
+                return Response({"error": "Utilisateur not found."}, status=status.HTTP_404_NOT_FOUND)
+
+            try:
+                chef = Chefprojet.objects.get(id_utilisateur=utilisateur_id)
+            except Chefprojet.DoesNotExist:
+                return Response({"error": "Chef de projet not found."}, status=status.HTTP_404_NOT_FOUND)
+
+            # Get the specific project and verify the chef has access to it
+            try:
+                project = Projet.objects.get(id_projet=project_id, id_utilisateur=chef)
+            except Projet.DoesNotExist:
+                return Response({"error": "Project not found or you don't have access to it."}, 
+                               status=status.HTTP_404_NOT_FOUND)
+
+            # Get sub-projects for this project
+            sub_projects = SousProjet.objects.filter(id_projet=project)
+            sub_project_ids = sub_projects.values_list('id_sous_projet', flat=True)
+
+            # Get incidents for this project and its sub-projects
+            incident_qs = Incident.objects.filter(
+                models.Q(id_projet=project) | models.Q(id_sous_projet__in=sub_project_ids)
+            )
+            incident_count = incident_qs.count()
+
+            # Get the latest 5 incidents
+            last_5_incidents = incident_qs.order_by('-date_incident')[:5]
+            last_5_incidents_data = [
+                {
+                    'id': inc.id_incident,
+                    'description': inc.description_incident,
+                    'date': inc.date_incident,
+                    'project_id': inc.id_projet_id,
+                    'sub_project_id': inc.id_sous_projet_id,
+                    'lieu': inc.lieu_incident,
+                    'type': inc.type_incident,
+                }
+                for inc in last_5_incidents
+            ]
+
+            # Calculate project statistics
+            status_labels = ['Terminé', 'En cours', 'En attente', 'Suspendu']
+            avg_progress = sub_projects.aggregate(avg=models.Avg('pourcentage'))['avg'] or 0
+            status_counts = {label: sub_projects.filter(statut_sous_projet=label).count() for label in status_labels}
+
+            # Get sub-project details
+            sub_projects_data = [
+                {
+                    "id": sp.id_sous_projet,
+                    "name": sp.nom_sous_projet,
+                    "progress": sp.pourcentage,
+                    "status": sp.statut_sous_projet,
+                    "start_date": sp.date_debut_sousprojet,
+                    "end_date": sp.date_finsousprojet,
+                }
+                for sp in sub_projects
+            ]
+
+            # Create sub-project timeline
+            sub_project_timeline = [
+                {
+                    "id": sp.id_sous_projet,
+                    "title": sp.nom_sous_projet,
+                    "startDate": sp.date_debut_sousprojet,
+                    "endDate": sp.date_finsousprojet,
+                    "progress": sp.pourcentage,
+                    "status": sp.statut_sous_projet
+                }
+                for sp in sub_projects
+            ]
+
+            # Prepare project data
+            project_data = {
+                "id": project.id_projet,
+                "name": project.nom_projet,
+                "description": project.description_de_projet,
+                "start_date": project.date_debut_de_projet,
+                "end_date": project.date_fin_de_projet,
+                "status": project.status,
+                "budget": project.ap,
+                "average_progress": avg_progress,
+                "status_counts": status_counts,
+                "total_sub_projects": sub_projects.count(),
+                "total_incidents": incident_count,
+                "last_5_incidents": last_5_incidents_data,
+                "sub_projects": sub_projects_data,
+                "sub_project_timeline": sub_project_timeline
+            }
+
+            return Response(project_data)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
