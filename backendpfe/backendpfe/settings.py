@@ -66,7 +66,8 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=3),  
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     
     'ROTATE_REFRESH_TOKENS': True,                   
-    'BLACKLIST_AFTER_ROTATION': True,                
+    'BLACKLIST_AFTER_ROTATION': True,     
+    'USER_ID_FIELD': 'id_utilisateur',         
 }
 
 REST_FRAMEWORK = {
@@ -106,10 +107,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backendpfe.wsgi.application"
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5174",
-]
-
 
 APPEND_SLASH = False
 
@@ -135,9 +132,9 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'bddpfe',
+            'NAME': 'farahbdd',
             'USER': 'root',
-            'PASSWORD': '',
+            'PASSWORD': 'farahBMZ.2106',
             'HOST': 'localhost',
             'PORT': '3306',
         }
