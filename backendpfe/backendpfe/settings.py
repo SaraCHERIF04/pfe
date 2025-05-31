@@ -66,14 +66,25 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=3),  
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     
     'ROTATE_REFRESH_TOKENS': True,                   
+<<<<<<< HEAD
     'BLACKLIST_AFTER_ROTATION': True,     
     'USER_ID_FIELD': 'id_utilisateur',         
+=======
+    'BLACKLIST_AFTER_ROTATION': True,  
+    'USER_ID_FIELD':'id_utilisateur', 
+>>>>>>> 0e41445dfedef93382bc6e875c8bc5c76c579659
 }
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+
     ),
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
 }
 
 MIDDLEWARE = [
@@ -132,9 +143,15 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
+<<<<<<< HEAD
             'NAME': 'farahbdd',
             'USER': 'root',
             'PASSWORD': 'farahBMZ.2106',
+=======
+            'NAME': 'sys',
+            'USER': 'root',
+            'PASSWORD': 'rania2003',
+>>>>>>> 0e41445dfedef93382bc6e875c8bc5c76c579659
             'HOST': 'localhost',
             'PORT': '3306',
         }
@@ -142,8 +159,8 @@ else:
 
 # Looking to send emails in production? Check out our Email API/SMTP product!
 EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
-EMAIL_HOST_USER = '4a036567466f28'
-EMAIL_HOST_PASSWORD = '3b469ae6994a08'
+EMAIL_HOST_USER = 'f59bc6c7211a7e'
+EMAIL_HOST_PASSWORD = 'd1b55446cde625'
 EMAIL_PORT = '2525'
 
 # Password validation

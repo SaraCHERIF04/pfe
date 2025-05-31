@@ -22,6 +22,8 @@ from .views.chef_view import ChefView, ChefDashboardView, ChefProjectDetailView
 from .views.user_view import ProfileView, ProfilePasswordView  # Ajout des nouvelles vues
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views.password_setup_view import PasswordSetupView
+from .views.auth_views import AuthView, ChangePasswordView
+
 
 urlpatterns = [
     # dashboards
@@ -35,9 +37,13 @@ urlpatterns = [
     path('marches', MarcheView.as_view(), name='marche_list'),
     path('marches/<int:pk>', MarcheView.as_view(), name='marche_detail'),
 
+    # pourchanger le mot de passe 
+    path('set-password/', PasswordSetupView.as_view(), name='set-password'),
+    path('auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
+    
     # sign in
     path('auth/', AuthView.as_view(), name='auth'),
-
+    
     # User URLs
     path('users', UserView.as_view(), name='user-list'),
     path('users/<int:pk>', UserView.as_view(), name='user-detail'),

@@ -12,6 +12,35 @@ from datetime import datetime
 from rest_framework_simplejwt.tokens import RefreshToken
 from ..responses.success_api_response import SuccessAPIResponse
 from ..responses.error_api_response import ErrorAPIResponse
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.hashers import check_password, make_password
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        current_password = request.data.get("current_password")
+        new_password = request.data.get("new_password")
+
+        if not current_password or not new_password:
+            return Response(ErrorAPIResponse({'message': 'Tous les champs sont requis.'}).data, status=status.HTTP_400_BAD_REQUEST)
+
+        # Vérification manuelle du mot de passe actuel
+        if not check_password(current_password, user.mot_de_passe):
+            return Response(ErrorAPIResponse({'message': 'Mot de passe actuel incorrect.'}).data, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            validate_password(new_password, user)
+        except Exception as e:
+            return Response(ErrorAPIResponse({'message': str(e)}).data, status=status.HTTP_400_BAD_REQUEST)
+
+        # Hasher et sauvegarder le nouveau mot de passe
+        user.mot_de_passe = make_password(new_password)
+        user.save()
+
+        return Response(SuccessAPIResponse({'message': 'Mot de passe mis à jour avec succès.'}).data, status=status.HTTP_200_OK)
 
 class AuthView(APIView):
     permission_classes = [AllowAny]
@@ -72,3 +101,4 @@ class AuthView(APIView):
         except Exception as e:
             print(e)
             return Response(ErrorAPIResponse({'error': str(e)}).data, status=status.HTTP_400_BAD_REQUEST)
+        
