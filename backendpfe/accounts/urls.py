@@ -64,8 +64,8 @@ urlpatterns = [
 
     # Incident URLs
     path('incident/ajout', IncidentView.as_view(), name='incident_ajout'),
-    path('incident/', IncidentView.as_view(), name='incident_list'),
-    path('incident/<int:pk>/', IncidentView.as_view(), name='incident_detail'),
+    path('incidents', IncidentView.as_view(), name='incident_list'),
+    path('incidents/<int:pk>/', IncidentView.as_view(), name='incident_detail'),
 
     # Meeting URLs
     path('reunions', MeetingView.as_view(), name='meeting_list'),

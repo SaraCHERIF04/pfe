@@ -254,6 +254,7 @@ class Incident(models.Model):
     id_sous_projet = models.ForeignKey('SousProjet', models.DO_NOTHING, db_column='id_sous_projet', blank=True, null=True)
     lieu_incident = models.CharField(max_length=30, blank=True, null=True)
     signale_par = models.CharField(max_length=50, blank=True, null=True)
+    
     lheure_incident = models.TimeField(blank=True, null=True)
     type_incident = models.CharField(max_length=30, blank=True, null=True)
 
