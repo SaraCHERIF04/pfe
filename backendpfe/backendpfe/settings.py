@@ -66,13 +66,8 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=3),  
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     
     'ROTATE_REFRESH_TOKENS': True,                   
-<<<<<<< HEAD
     'BLACKLIST_AFTER_ROTATION': True,     
     'USER_ID_FIELD': 'id_utilisateur',         
-=======
-    'BLACKLIST_AFTER_ROTATION': True,  
-    'USER_ID_FIELD':'id_utilisateur', 
->>>>>>> 0e41445dfedef93382bc6e875c8bc5c76c579659
 }
 
 REST_FRAMEWORK = {
@@ -143,15 +138,9 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-<<<<<<< HEAD
             'NAME': 'farahbdd',
             'USER': 'root',
             'PASSWORD': 'farahBMZ.2106',
-=======
-            'NAME': 'sys',
-            'USER': 'root',
-            'PASSWORD': 'rania2003',
->>>>>>> 0e41445dfedef93382bc6e875c8bc5c76c579659
             'HOST': 'localhost',
             'PORT': '3306',
         }
