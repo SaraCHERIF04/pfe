@@ -228,19 +228,10 @@ class EmployerView(APIView):
             if employee.id_sous_projet:
                 subprojects = [employee.id_sous_projet]
             
-            incidents = []
-            if projects or subprojects:
-                q_objects = Q()
-                if projects:
-                    project_ids = [p.id_projet for p in projects]
-                    q_objects |= Q(id_projet__in=project_ids)
-                if subprojects:
-                    subproject_ids = [sp.id_sous_projet for sp in subprojects]
-                    q_objects |= Q(id_sous_projet__in=subproject_ids)
-                incidents = Incident.objects.filter(q_objects).distinct()
-            
+            incidents = Incident.objects.all()
+
             incident_data = self.serialize_incidents(incidents)
-            
+
             # Handle pagination
             paginated_data, pagination_info = self.paginate_data(request, incident_data)
             

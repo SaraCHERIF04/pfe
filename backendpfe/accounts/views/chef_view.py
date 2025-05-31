@@ -209,24 +209,9 @@ class ChefView(APIView):
     def get_incidents(self, request, chef):
         """Get incidents related to the chef's projects and subprojects"""
         try:
-            # Get projects and subprojects managed by this chef
-            projects = Projet.objects.filter(id_utilisateur=chef)
-            subprojects = SousProjet.objects.filter(id_utilisateur=chef)
-            
-            incidents = []
-            
+            # Get projects and subprojects managed by this chef         
             # Build query conditions
-            q_objects = Q()
-            if projects:
-                project_ids = [p.id_projet for p in projects]
-                q_objects |= Q(id_projet__in=project_ids)
-            if subprojects:
-                subproject_ids = [sp.id_sous_projet for sp in subprojects]
-                q_objects |= Q(id_sous_projet__in=subproject_ids)
-                
-            # Query incidents if chef has any projects or subprojects
-            if projects or subprojects:
-                incidents = Incident.objects.filter(q_objects).distinct()
+            incidents = Incident.objects.all()
             
             incident_data = self.serialize_incidents(incidents)
             
