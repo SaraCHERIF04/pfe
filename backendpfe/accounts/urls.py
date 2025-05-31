@@ -11,7 +11,7 @@ from .views import (
     EmployerView,
     FinancierView,
     MarcheView,
-
+    
     ResponsableDashboardView
 )
 
@@ -19,21 +19,31 @@ from .views.auth_views import AuthView
 from .views.maitre_doeuvre_view import MaitreDoeuvreView  
 from .views.employer_view import EmployeeDashboardView
 from .views.chef_view import ChefView, ChefDashboardView, ChefProjectDetailView
-
+from .views.user_view import ProfileView, ProfilePasswordView  # Ajout des nouvelles vues
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views.password_setup_view import PasswordSetupView
+from .views.auth_views import AuthView, ChangePasswordView
+
 
 urlpatterns = [
     # dashboards
     path('dashboard/financier', FinancierView.as_view(), name='financier-dashboard'),
 
+        # Profile URLs - NOUVEAUX ENDPOINTS
+    path('profile/', ProfileView.as_view(), name='profile'),
+    path('profile/update-password/', ProfilePasswordView.as_view(), name='profile-update-password'),
+
     # Marche URLs
     path('marches', MarcheView.as_view(), name='marche_list'),
     path('marches/<int:pk>', MarcheView.as_view(), name='marche_detail'),
 
+    # pourchanger le mot de passe 
+    path('set-password/', PasswordSetupView.as_view(), name='set-password'),
+    path('auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
+    
     # sign in
     path('auth/', AuthView.as_view(), name='auth'),
-
+    
     # User URLs
     path('users', UserView.as_view(), name='user-list'),
     path('users/<int:pk>', UserView.as_view(), name='user-detail'),
@@ -115,5 +125,8 @@ urlpatterns = [
     # sign up
     # path('accounts/create/', create_account, name='create_account'),
     # path('projects/create/', CreateProjectView.as_view(), name='create_project'),
+    #directeur
+    path('directeur/incidents', ResponsableDashboardView.as_view(), {'data_type': 'incidents'}, name='responsable_incidents'),
+
     path('set-password', PasswordSetupView.as_view(), name='set-password'),
 ]

@@ -12,6 +12,7 @@ from .financier_view import FinancierView
 from .marche_view import MarcheView
 from .responsable_view import ResponsableDashboardView
 
+
 all = [
     'ProjectView',
     'DocumentView',
@@ -22,5 +23,6 @@ all = [
     'AuthView',
     'FactureView',
     'UserView',
-    'EmployerView'
+    'EmployerView',
+    'MarcheView'
 ]
