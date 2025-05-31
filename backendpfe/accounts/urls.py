@@ -61,6 +61,8 @@ urlpatterns = [
     path('documents/ajout', DocumentView.as_view(), name='document_list'),
     path('documents', DocumentView.as_view(), name='document_list'),
     path('documents/<int:pk>', DocumentView.as_view(), name='document_detail'),
+    # path('api/documents/download/<int:file_id>/', DocumentView.as_view({'get': 'download_file'}), name='document-file-download'),
+    path('documents/<int:id_document>/download_all/', DocumentView.as_view(), name='document-download-all'),
 
     # Incident URLs
     path('incident/ajout', IncidentView.as_view(), name='incident_ajout'),
