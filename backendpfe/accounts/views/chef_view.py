@@ -132,6 +132,8 @@ class ChefView(APIView):
                 'message': f'Error retrieving chef de projet data: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+
+    
     def get_projects(self, request, chef):
         """Get projects assigned to the chef"""
         try:
