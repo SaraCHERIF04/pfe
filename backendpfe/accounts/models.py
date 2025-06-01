@@ -254,6 +254,7 @@ class Incident(models.Model):
     id_sous_projet = models.ForeignKey('SousProjet', models.DO_NOTHING, db_column='id_sous_projet', blank=True, null=True)
     lieu_incident = models.CharField(max_length=30, blank=True, null=True)
     signale_par = models.CharField(max_length=50, blank=True, null=True)
+    
     lheure_incident = models.TimeField(blank=True, null=True)
     type_incident = models.CharField(max_length=30, blank=True, null=True)
 
@@ -313,7 +314,7 @@ class Projet(models.Model):
     description_de_projet = models.CharField(max_length=30)
     date_debut_de_projet = models.DateField()
     date_fin_de_projet = models.DateField()
-    ap = models.FloatField()
+    budget = models.FloatField()
     status = models.CharField(max_length=30)
     id_utilisateur = models.ForeignKey(Chefprojet, models.DO_NOTHING, db_column='id_utilisateur', blank=True, null=True)
 
@@ -404,7 +405,6 @@ class Notification(models.Model):
     contenu = models.TextField()
     lien = models.TextField(default=None)
     type = models.TextField(choices=[('info', 'Info'), ('warning', 'Warning'),('new_project', 'New Project'),('new_sub_project', 'New Sub Project'),('new_reunion', 'New Reunion')])
-    created_at = models.DateTimeField(auto_now_add=True)
     lu = models.BooleanField(default=0)
     id_utilisateur = models.ForeignKey(Utilisateur, models.DO_NOTHING, db_column='id_utilisateur', blank=True, null=True)
 

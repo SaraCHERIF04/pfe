@@ -11,7 +11,7 @@ from .views import (
     EmployerView,
     FinancierView,
     MarcheView,
-    
+    MaitreOuvrageView,
     ResponsableDashboardView
 )
 
@@ -61,11 +61,13 @@ urlpatterns = [
     path('documents/ajout', DocumentView.as_view(), name='document_list'),
     path('documents', DocumentView.as_view(), name='document_list'),
     path('documents/<int:pk>', DocumentView.as_view(), name='document_detail'),
+    # path('api/documents/download/<int:file_id>/', DocumentView.as_view({'get': 'download_file'}), name='document-file-download'),
+    path('documents/<int:id_document>/download_all/', DocumentView.as_view(), name='document-download-all'),
 
     # Incident URLs
     path('incident/ajout', IncidentView.as_view(), name='incident_ajout'),
-    path('incident/', IncidentView.as_view(), name='incident_list'),
-    path('incident/<int:pk>/', IncidentView.as_view(), name='incident_detail'),
+    path('incidents', IncidentView.as_view(), name='incident_list'),
+    path('incidents/<int:pk>/', IncidentView.as_view(), name='incident_detail'),
 
     # Meeting URLs
     path('reunions', MeetingView.as_view(), name='meeting_list'),
@@ -118,6 +120,11 @@ urlpatterns = [
     path('responsable/dashboard/', ResponsableDashboardView.as_view(), name='responsable-dashboard'),
     path('employee/dashboard/', EmployeeDashboardView.as_view(), name='employee-enhanced-dashboard'),
 
+    # Maitre d'Ouvrage URLs
+    path('chef/maitre-ouvrage', MaitreOuvrageView.as_view(), name='maitre_ouvrage_list'),
+    path('maitre-ouvrage/<int:pk>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_detail'),
+    path('maitre-ouvrage/projet/<int:projet_id>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_by_project'),
+    path('maitre-ouvrage/sous-projet/<int:sous_projet_id>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_by_sub_project'),
 
     path('maitre-doeuvre/', MaitreDoeuvreView.as_view(), name='maitre_doeuvre_list'),
     # path('maitre-doeuvre/<int:pk>/', MaitreDoeuvreView.as_view(), name='maitre_doeuvre_detail'),

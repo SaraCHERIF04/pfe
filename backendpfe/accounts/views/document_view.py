@@ -3,11 +3,15 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
+from django.http import FileResponse, Http404
 from ..models import Document, DocumentFile
 from ..serializers.document_serializer import DocumentSerializer, DocumentFileSerializer
 import os
 from django.conf import settings
 from datetime import datetime
+import zipfile
+import io
+from django.http import HttpResponse
 
 class DocumentPagination(PageNumberPagination):
     page_size = 10
@@ -226,3 +230,40 @@ class DocumentView(APIView):
             return Document.objects.get(pk=pk)
         except Document.DoesNotExist:
             return None
+    
+    def download_all_files(self, request, id_document):
+            try:
+                document = Document.objects.get(pk=id_document)
+                files = document.files.all()
+                if not files:
+                    return Response({
+                        'success': False,
+                        'message': 'No files found for this document'
+                    }, status=status.HTTP_404_NOT_FOUND)
+
+                # Create in-memory ZIP archive
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                    for file_obj in files:
+                        file_path = os.path.join(settings.MEDIA_ROOT, file_obj.chemin)
+                        if os.path.exists(file_path):
+                            # Add file to zip with just the filename (no full path)
+                            zip_file.write(file_path, arcname=os.path.basename(file_path))
+
+                zip_buffer.seek(0)
+                response = HttpResponse(zip_buffer, content_type='application/zip')
+                response['Content-Disposition'] = f'attachment; filename=document_{id_document}_files.zip'
+                return response
+
+            except Document.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'message': 'Document not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+    def dispatch(self, request, *args, **kwargs):
+        if 'id_document' in kwargs and request.method == 'GET':
+            # Use a special URL pattern for downloading all files as zip
+            if request.path.endswith('/download_all/'):
+                return self.download_all_files(request, kwargs['id_document'])
+        return super().dispatch(request, *args, **kwargs)

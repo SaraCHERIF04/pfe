@@ -65,7 +65,8 @@ class ProjetSerializer(serializers.ModelSerializer):
             'members',
             'documents',
             'subprojects',
-            'reunions'
+            'reunions',
+            'budget'
         ]
         read_only_fields = ['id_projet', 'chef_projet', 'members', 'documents', 'subprojects', 'reunions']
 

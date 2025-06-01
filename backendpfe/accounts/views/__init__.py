@@ -11,6 +11,7 @@ from .employer_view import EmployerView
 from .financier_view import FinancierView
 from .marche_view import MarcheView
 from .responsable_view import ResponsableDashboardView
+from .maitre_ouvrage_view import MaitreOuvrageView
 
 
 all = [
@@ -24,5 +25,6 @@ all = [
     'FactureView',
     'UserView',
     'EmployerView',
-    'MarcheView'
+    'MarcheView',
+    'MaitreOuvrageView'
 ]

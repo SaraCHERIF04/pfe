@@ -59,8 +59,7 @@ class NotificationService:
                 contenu=content,
                 type=notification_type,
                 lien=link,
-                id_utilisateur_id=user_id,
-                created_at=timezone.now()
+                id_utilisateur_id=user_id
             )
 
         # Get FCM tokens for all users

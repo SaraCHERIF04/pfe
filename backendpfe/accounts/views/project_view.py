@@ -109,13 +109,20 @@ class ProjectView(APIView):
                 'success': False,
                 'message': 'Project not found'
             }, status=status.HTTP_404_NOT_FOUND)
-
+        for rel in project._meta.related_objects:
+           accessor_name = rel.get_accessor_name()
+           related_manager = getattr(project, accessor_name)
+           # Use all().delete() to remove related objects
+           related_count = related_manager.all().count()
+           if related_count > 0:
+              related_manager.all().delete()
+              print(f"Deleted {related_count} objects from {accessor_name}")
         project.delete()
         return Response({
             'success': True,
             'message': 'Project deleted successfully'
         }, status=status.HTTP_204_NO_CONTENT)
-
+    
     def get_object(self, pk):
         try:
             return Projet.objects.get(pk=pk)
