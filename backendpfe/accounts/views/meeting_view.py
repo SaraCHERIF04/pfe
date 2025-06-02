@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-from ..models import Reunion
+from ..models import Reunion, Projet, Employe, SousProjet
 from ..serializers.meeting_serializer import ReunionSerializer
 
 class MeetingPagination(PageNumberPagination):
@@ -25,8 +25,10 @@ class MeetingView(APIView):
 
     def get(self, request, pk=None):
         if pk:
-            return self.get_single_meeting(request, pk)
-        return self.get_all_meetings()
+            user = request.user
+            return self.get_single_meeting(request, pk, user)
+        user = request.user
+        return self.get_all_meetings(user)
 
     def get_single_meeting(self, request, pk):
         meeting = self.get_object(pk)
@@ -43,10 +45,18 @@ class MeetingView(APIView):
             'data': serializer.data
         }, status=status.HTTP_200_OK)
 
-    def get_all_meetings(self):
-        meetings = Reunion.objects.all()
-        serializer = ReunionSerializer(meetings, many=True)
+    def get_all_meetings(self, user):
+        if(user.role_de_utilisateur == 'chef'):
+            project_ids = Projet.objects.filter(id_utilisateur=user.id_utilisateur).values_list('id_projet', flat=True)
+            meetings = Reunion.objects.filter(id_projet__in=project_ids)
+        elif(user.role_de_utilisateur == 'employer'):
+            subProjectIds = Employe.objects.filter(id_utilisateur=user.id_utilisateur).values_list('id_sous_projet', flat=True)
+            user_sub_projects = SousProjet.objects.filter(id_sous_projet__in=subProjectIds)
+            project_ids = user_sub_projects.values_list('id_projet', flat=True).distinct()
+            meetings = Reunion.objects.filter(id_sous_projet__in=project_ids)
         
+        serializer = ReunionSerializer(meetings, many=True)
+            
         paginated_response = self.get_paginated_response(serializer.data)
         if isinstance(paginated_response, Response):
             return Response({

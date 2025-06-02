@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-from ..models import Facture
+from ..models import Facture,Projet,Employe
 from ..serializers.facture_serializer import FactureSerializer
 from ..responses.success_api_response import SuccessAPIResponse
 from ..responses.error_api_response import ErrorAPIResponse
@@ -26,18 +26,19 @@ class FactureView(APIView):
         return Response(data)
 
     def get(self, request, projet_id=None, sous_projet_id=None, pk=None):
+        user = request.user
         if projet_id:
-            return self.get_factures_by_project(request, projet_id)
+            return self.get_factures_by_project(request, projet_id, user)
         
         if sous_projet_id:
-            return self.get_factures_by_sub_project(request, sous_projet_id)
+            return self.get_factures_by_sub_project(request, sous_projet_id, user)
 
         if pk:
-            return self.get_single_facture(request, pk)
+            return self.get_single_facture(request, pk, user)
 
-        return self.get_all_factures()
+        return self.get_all_factures(user)
 
-    def get_single_facture(self, request, pk):
+    def get_single_facture(self, request, pk, user):
         facture = self.get_object(pk)
         if not facture:
             return ErrorAPIResponse({
@@ -52,8 +53,18 @@ class FactureView(APIView):
             'data': serializer.data
         }, status=status.HTTP_200_OK)
 
-    def get_all_factures(self):
-        factures = Facture.objects.all()
+    def get_all_factures(self, user):
+
+    
+        if user.role_de_utilisateur == 'chef':
+            project_ids = Projet.objects.filter(id_utilisateur=user.id_utilisateur).values_list('id_projet', flat=True)
+            factures = Facture.objects.filter(id_projet__in=project_ids)
+        elif user.role_de_utilisateur == 'employer' or user.role_de_utilisateur == 'financier':
+            subProjectIds = Facture.objects.objects.filter(id_utilisateur=user.id_utilisateur).values_list('id_sous_projet', flat=True)
+            factures = Facture.objects.filter(id_sous_projet__in=subProjectIds)
+        else:
+            factures = Facture.objects.all()
+            
         serializer = FactureSerializer(factures, many=True)
         return Response({
             'success': True,
@@ -114,7 +125,7 @@ class FactureView(APIView):
             'message': 'Facture deleted successfully'
         }, status=status.HTTP_204_NO_CONTENT)
 
-    def get_factures_by_project(self, request, projet_id):
+    def get_factures_by_project(self, request, projet_id, user):
         factures = Facture.objects.filter(id_projet=projet_id)
         serializer = FactureSerializer(factures, many=True)
 
@@ -128,7 +139,7 @@ class FactureView(APIView):
 
         return paginated_response
 
-    def get_factures_by_sub_project(self, request, sous_projet_id):
+    def get_factures_by_sub_project(self, request, sous_projet_id, user):
         factures = Facture.objects.filter(id_sous_projet=sous_projet_id)
         serializer = FactureSerializer(factures, many=True)
 

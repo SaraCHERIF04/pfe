@@ -124,6 +124,7 @@ urlpatterns = [
     path('chef/maitre-ouvrage', MaitreOuvrageView.as_view(), name='maitre_ouvrage_list'),
     path('maitre-ouvrage', MaitreOuvrageView.as_view(), name='maitre_ouvrage_list'),
     path('chef/maitre-ouvrage/<int:pk>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_detail'),
+    path('maitre-ouvrage/<int:pk>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_detail'),
     path('maitre-ouvrage/projet/<int:projet_id>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_by_project'),
     path('maitre-ouvrage/sous-projet/<int:sous_projet_id>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_by_sub_project'),
 

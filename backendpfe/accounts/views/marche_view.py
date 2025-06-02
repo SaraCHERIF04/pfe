@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-from ..models import Marche
+from ..models import Marche, Projet, Employe, SousProjet
 from ..serializers.marche_serializer import MarcheSerializer
 from ..services.notification_service import NotificationService
 
@@ -26,8 +26,10 @@ class MarcheView(APIView):
 
     def get(self, request, pk=None):
         if pk:
-            return self.get_single_marche(request, pk)
-        return self.get_all_marches(request)
+            user = request.user
+            return self.get_single_marche(request, pk, user)
+        user = request.user
+        return self.get_all_marches(request, user)
 
     def get_single_marche(self, request, pk):
         marche = self.get_object(pk)
@@ -44,10 +46,21 @@ class MarcheView(APIView):
             'data': serializer.data
         }, status=status.HTTP_200_OK)
 
-    def get_all_marches(self, request):
-        marches = Marche.objects.all()
-        serializer = MarcheSerializer(marches, many=True)
+    def get_all_marches(self, request, user):
         
+
+        if user.role_de_utilisateur == 'chef':
+            project_ids = Projet.objects.filter(id_utilisateur=user.id_utilisateur).values_list('id_projet', flat=True)
+            marches = Marche.objects.filter(id_projet__in=project_ids)
+        elif user.role_de_utilisateur == 'employer' or user.role_de_utilisateur == 'financier':
+            subProjectIds = Employe.objects.filter(id_utilisateur=user.id_utilisateur).values_list('id_sous_projet', flat=True)
+            user_sub_projects = SousProjet.objects.filter(id_sous_projet__in=subProjectIds)
+            project_ids = user_sub_projects.values_list('id_projet', flat=True).distinct()
+            marches = Marche.objects.filter(id_sous_projet__in=project_ids)
+        else:
+            marches = marches.filter(id_projet=user.id_projet)
+      
+        serializer = MarcheSerializer(marches, many=True)
         paginated_response = self.get_paginated_response(serializer.data)
         if isinstance(paginated_response, Response):
             return Response({
