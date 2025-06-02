@@ -15,7 +15,7 @@ from django.db import models
 
 class CustomPagination(PageNumberPagination):
     page_size = 10
-    page_size_query_param = 'page_size'
+    page_size_query_param = 'per_page'
     max_page_size = 100
 
 
@@ -161,7 +161,7 @@ class ChefView(APIView):
         """Get subprojects assigned to the chef"""
         try:
             # Get subprojects where this chef is the chef de projet
-            subprojects = SousProjet.objects.filter(id_utilisateur=chef)
+            subprojects = SousProjet.objects.filter(id_projet__id_utilisateur=chef)
             
             subproject_data = self.serialize_subprojects(subprojects)
             
@@ -235,7 +235,7 @@ class ChefView(APIView):
         try:
             # Get projects and subprojects managed by this chef
             projects = Projet.objects.filter(id_utilisateur=chef)
-            subprojects = SousProjet.objects.filter(id_utilisateur=chef)
+            subprojects = SousProjet.objects.filter(id_projet__id_utilisateur=chef)
                 
             # If no projects or subprojects are assigned to the chef
             if not projects and not subprojects:
@@ -361,7 +361,7 @@ class ChefView(APIView):
                 try:
                     project_id = data['project_id']
                     # Check if chef is the chef de projet for this project
-                    project = Projet.objects.get(id_projet=project_id, id_utilisateur=chef)
+                    project = Projet.objects.get(id_projet=project_id)
                     if not project:
                         return Response({
                             'success': False,
@@ -849,7 +849,7 @@ class ChefDashboardView(APIView):
             for inc in last_5_incidents
         ]
 
-        total_budget = projects.aggregate(total=models.Sum('ap'))['total'] or 0
+        total_budget = projects.aggregate(total=models.Sum('budget'))['total'] or 0
         status_labels = ['Terminé', 'En cours', 'En attente', 'Suspendu']
         dashboard_data = []
         for project in projects:
@@ -873,21 +873,23 @@ class ChefDashboardView(APIView):
                 "average_progress": avg_progress,
                 "status_counts": status_counts,
                 "timeline": timeline,
-                "budget": project.ap,
+                "budget": project.budget,
             })
 
         # Create separate project timeline
-        project_timeline = [
-            {
+        project_timeline = []
+        for project in projects:
+            sps = SousProjet.objects.filter(id_projet=project)
+            avg_progress = sps.aggregate(avg=models.Avg('pourcentage'))['avg'] or 0
+            project_timeline.append({
                 "id": project.id_projet,
                 "title": project.nom_projet,
                 "startDate": project.date_debut_de_projet,
                 "endDate": project.date_fin_de_projet,
                 "status": project.status,
-                "budget": project.ap
-            }
-            for project in projects
-        ]
+                "budget": project.budget,
+                "progress": avg_progress
+            })
 
         return Response({
             "total_projects": projects.count(),
@@ -986,7 +988,7 @@ class ChefProjectDetailView(APIView):
                 "start_date": project.date_debut_de_projet,
                 "end_date": project.date_fin_de_projet,
                 "status": project.status,
-                "budget": project.ap,
+                "budget": project.budget,
                 "average_progress": avg_progress,
                 "status_counts": status_counts,
                 "total_sub_projects": sub_projects.count(),

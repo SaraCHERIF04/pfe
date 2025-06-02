@@ -138,9 +138,9 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'farahbdd',
+            'NAME': 'bddpfe2',
             'USER': 'root',
-            'PASSWORD': 'farahBMZ.2106',
+            'PASSWORD': '',
             'HOST': 'localhost',
             'PORT': '3306',
         }

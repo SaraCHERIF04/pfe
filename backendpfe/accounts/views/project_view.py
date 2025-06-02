@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-from ..models import Projet, Employe, Document
+from ..models import Projet, Employe, Document, SousProjet,MaitreOuvrage
 from ..serializers.project_serializer import ProjetSerializer
 from ..services.notification_service import NotificationService
 
@@ -45,7 +45,23 @@ class ProjectView(APIView):
         }, status=status.HTTP_200_OK)
 
     def get_all_projects(self, request):
-        projects = Projet.objects.all()
+        user = request.user
+        
+        # If user is responsable, return all projects
+        if user.role_de_utilisateur == 'responsable':
+            projects = Projet.objects.all()
+        # If user is chef, return only their projects
+        elif user.role_de_utilisateur == 'chef':
+            projects = Projet.objects.filter(id_utilisateur=user.id_utilisateur)
+        # For other roles, return projects where they are part of sub-projects
+        else:
+            # Get all sub-projects where the user is 
+            subProjectIds = Employe.objects.filter(id_utilisateur=user.id_utilisateur).values_list('id_sous_projet', flat=True)
+            user_sub_projects = SousProjet.objects.filter(id_sous_projet__in=subProjectIds)
+            # Get the parent projects of these sub-projects
+            project_ids = user_sub_projects.values_list('id_projet', flat=True).distinct()
+            projects = Projet.objects.filter(id_projet__in=project_ids)
+
         serializer = ProjetSerializer(projects, many=True)
         
         paginated_response = self.get_paginated_response(serializer.data)
@@ -60,8 +76,20 @@ class ProjectView(APIView):
 
     def post(self, request):
         serializer = ProjetSerializer(data=request.data)
+        members_data = request.data.pop('members', [])
         if serializer.is_valid():
             project = serializer.save()
+            for member_data in members_data:
+                Employe.objects.create(
+                    id_projet=project,
+                    id_utilisateur_id=member_data['id'],
+                )
+            
+            maitre_d_ouvrage_data = request.data.pop('maitre_ouvrage', None)
+            maitre_d_ouvrage = MaitreOuvrage.objects.filter(id_mo=maitre_d_ouvrage_data).first()
+            project.id_mo = maitre_d_ouvrage.id_mo
+            project.save()
+            
             NotificationService.send_project_notification(
                 project_name=project.nom_projet,
                 project_id=project.id_projet,
@@ -88,8 +116,19 @@ class ProjectView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         serializer = ProjetSerializer(project, data=request.data, partial=True)
+        members_data = request.data.pop('members', [])
         if serializer.is_valid():
             project = serializer.save()
+            for member_data in members_data:
+                Employe.objects.filter(id_projet=project, id_utilisateur_id=member_data['id']).delete()
+                Employe.objects.create(
+                    id_projet=project,
+                    id_utilisateur_id=member_data['id'],
+                )
+            maitre_d_ouvrage_data = request.data.pop('maitre_ouvrage', None)
+            maitre_d_ouvrage = MaitreOuvrage.objects.filter(id_mo=maitre_d_ouvrage_data).first()
+            project.id_mo = maitre_d_ouvrage.id_mo
+            project.save()
             return Response({
                 'success': True,
                 'message': 'Project updated successfully',

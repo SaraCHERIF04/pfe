@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import Projet, Utilisateur, Document, Employe, SousProjet, Reunion
+from ..models import Projet, Utilisateur, Document, Employe, SousProjet, Reunion,MaitreOuvrage
 
 class UtilisateurSerializer(serializers.ModelSerializer):
     class Meta:
@@ -10,6 +10,12 @@ class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = ['id_document', 'titre', 'date_ajout', 'description','type']
+
+
+class MaitreOuvrageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MaitreOuvrage
+        fields = ['id_mo', 'nom_mo', 'type_mo', 'adress_mo', 'email_mo', 'tel_mo']
 
 class ReunionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -50,6 +56,7 @@ class ProjetSerializer(serializers.ModelSerializer):
     documents = serializers.SerializerMethodField()
     subprojects = serializers.SerializerMethodField()
     reunions = serializers.SerializerMethodField()
+    maitre_d_ouvrage = serializers.SerializerMethodField()
     
     class Meta:
         model = Projet
@@ -66,7 +73,8 @@ class ProjetSerializer(serializers.ModelSerializer):
             'documents',
             'subprojects',
             'reunions',
-            'budget'
+            'budget',
+            'maitre_d_ouvrage'
         ]
         read_only_fields = ['id_projet', 'chef_projet', 'members', 'documents', 'subprojects', 'reunions']
 
@@ -91,6 +99,10 @@ class ProjetSerializer(serializers.ModelSerializer):
     def get_reunions(self, obj):
         reunions = Reunion.objects.filter(id_projet=obj.id_projet)
         return ReunionSerializer(reunions, many=True).data
+
+    def get_maitre_d_ouvrage(self, obj):
+        maitre_d_ouvrage = MaitreOuvrage.objects.get(id_mo=obj.id_mo)
+        return MaitreOuvrageSerializer(maitre_d_ouvrage).data
     
     def validate(self, data):
         if data['date_debut_de_projet'] > data['date_fin_de_projet']:

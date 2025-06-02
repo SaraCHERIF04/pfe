@@ -64,9 +64,34 @@ class SubProjectView(APIView):
         return paginated_response
 
     def post(self, request):
+        # Extract members and chef_projet from request data
+        members_data = request.data.pop('members', [])
+        chef_projet_data = request.data.pop('chef_projet', None)
+        project_id = request.data.pop('project', None)
+        documents_data = request.data.pop('documents', [])
+
+        # Create the sub-project
         serializer = SousProjetSerializer(data=request.data)
         if serializer.is_valid():
             sous_projet = serializer.save()
+
+            # Add members to the sub-project
+            for member_data in members_data:
+                Employe.objects.create(
+                    id_sous_projet=sous_projet,
+                    id_utilisateur_id=member_data['id'],
+                )
+                
+            # Update documents with the new sub-project
+            for document_data in documents_data:
+                try:
+                    document = Document.objects.get(id_document=document_data['id_document'])
+                    document.id_sous_projet = sous_projet
+                    document.save()
+                except Document.DoesNotExist:
+                    continue
+
+            # Return the created sub-project with all its relationships
             return Response({
                 'success': True,
                 'message': 'SousProjet created successfully',
@@ -81,6 +106,35 @@ class SubProjectView(APIView):
 
     def put(self, request, pk):
         sous_projet = self.get_object(pk)
+        members_data = request.data.pop('members', [])
+        documents_data = request.data.pop('documents', [])
+         # Add members to the sub-project
+        pourcentage_avancement = request.data.pop('pourcentage_avancement', None)
+        # Add members to the sub-project
+        Employe.objects.filter(id_sous_projet=sous_projet).delete()
+        for member_data in members_data:
+          
+            Employe.objects.create(
+                id_sous_projet=sous_projet,
+                id_utilisateur_id=member_data['id_utilisateur'],
+            )
+
+        for document_data in documents_data:
+            Employe.objects.create(
+                id_sous_projet=sous_projet,
+                id_utilisateur_id=member_data['id_utilisateur'],
+            )
+
+            # Add documents if any
+             # Update documents with the new sub-project
+        for document_data in documents_data:
+                try:
+                    document = Document.objects.get(id_document=document_data['id_document'])
+                    document.id_sous_projet = sous_projet
+                    document.save()
+                except Document.DoesNotExist:
+                    continue
+
         if not sous_projet:
             return Response({
                 'success': False,
@@ -90,6 +144,9 @@ class SubProjectView(APIView):
         serializer = SousProjetSerializer(sous_projet, data=request.data, partial=True)
         if serializer.is_valid():
             sous_projet = serializer.save()
+            sous_projet.pourcentage = pourcentage_avancement
+            sous_projet.save()
+
             return Response({
                 'success': True,
                 'message': 'SousProjet updated successfully',

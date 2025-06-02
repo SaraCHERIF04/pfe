@@ -140,13 +140,12 @@ class EmployerView(APIView):
         """Get projects assigned to the employee"""
         try:
             projects = []
-            if employee.id_projet:
-                projects = [employee.id_projet]
+            subprojectsIds = Employe.objects.filter(id_utilisateur=employee.id_utilisateur).values_list('id_sous_projet', flat=True)
             
-            # Convert to list before pagination if it's not already a queryset
-            if not isinstance(projects, list):
-                projects = list(projects)
-                
+            user_sub_projects = SousProjet.objects.filter(id_sous_projet__in=subprojectsIds)
+            # Get the parent projects of these sub-projects
+            project_ids = user_sub_projects.values_list('id_projet', flat=True).distinct()
+            projects = Projet.objects.filter(id_projet__in=project_ids)
             project_data = self.serialize_projects(projects)
             
             # Handle pagination
@@ -837,10 +836,10 @@ class EmployeeDashboardView(APIView):
     
     def get(self, request):
         """
-        Get enhanced dashboard data for the employee including:
-        - Sub-project counts by status
-        - Recent incidents
-        - Monthly progression data
+            Get enhanced dashboard data for the employee including:
+            - Sub-project counts by status
+            - Recent incidents
+            - Monthly progression data
         """
         try:
             # Get the employee record
@@ -853,8 +852,11 @@ class EmployeeDashboardView(APIView):
                 }, status=status.HTTP_404_NOT_FOUND)
             
             # Get the sub-project assigned to this employee
-            subproject = employee.id_sous_projet
-            
+            # print(employee.id_sous_projet)
+            subproject = employee.id_sous_projet if employee.id_sous_projet else None
+            # print(subproject)
+
+            print(subproject)
             if not subproject:
                 return Response({
                     'success': True,

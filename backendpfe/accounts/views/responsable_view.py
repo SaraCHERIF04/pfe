@@ -41,7 +41,7 @@ class ResponsableDashboardView(APIView):
                 for inc in last_5_incidents
             ]
 
-            total_budget = projects.aggregate(total=models.Sum('ap'))['total'] or 0
+            total_budget = projects.aggregate(total=models.Sum('budget'))['total'] or 0
             status_labels = ['Terminé', 'En cours', 'En attente', 'Suspendu']
             dashboard_data = []
             
@@ -56,7 +56,8 @@ class ResponsableDashboardView(APIView):
                     "project_name": project.nom_projet,
                     "average_progress": avg_progress,
                     "status_counts": status_counts,
-                    "budget": project.ap,
+                    "budget": project.budget,
+                    "progress": avg_progress
                 })
 
             # Create project timeline (same as in ChefDashboardView)
@@ -67,7 +68,8 @@ class ResponsableDashboardView(APIView):
                     "startDate": project.date_debut_de_projet,
                     "endDate": project.date_fin_de_projet,
                     "status": project.status,
-                    "budget": project.ap
+                    "budget": project.budget,
+                    "progress": avg_progress
                 }
                 for project in projects
             ]

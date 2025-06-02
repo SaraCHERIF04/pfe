@@ -276,12 +276,12 @@ class MaitreDoeuve(models.Model):
 class MaitreOuvrage(models.Model):
     id_mo = models.AutoField(primary_key=True)
     id_projet = models.ForeignKey('Projet', models.DO_NOTHING, db_column='id_projet', blank=True, null=True)
-    description_mo = models.CharField(max_length=30)
-    nom_mo = models.CharField(max_length=30, blank=True, null=True)
-    type_mo = models.CharField(max_length=30, blank=True, null=True)
-    adress_mo = models.CharField(max_length=50, blank=True, null=True)
-    email_mo = models.CharField(unique=True, max_length=30, blank=True, null=True)
-    tel_mo = models.CharField(unique=True, max_length=10, blank=True, null=True)
+    description_mo = models.CharField(max_length=30, null=True)
+    nom_mo = models.CharField(max_length=30, null=True)
+    type_mo = models.CharField(max_length=30, null=True)
+    adress_mo = models.CharField(max_length=50, null=True)
+    email_mo = models.CharField(unique=True, max_length=30, null=True)
+    tel_mo = models.CharField(unique=True, max_length=10, null=True)
 
     class Meta:
         managed = False
@@ -316,6 +316,7 @@ class Projet(models.Model):
     date_fin_de_projet = models.DateField()
     budget = models.FloatField()
     status = models.CharField(max_length=30)
+    id_mo = models.IntegerField(blank=True, null=True)
     id_utilisateur = models.ForeignKey(Chefprojet, models.DO_NOTHING, db_column='id_utilisateur', blank=True, null=True)
 
     class Meta:

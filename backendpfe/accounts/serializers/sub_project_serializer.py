@@ -38,6 +38,7 @@ class SousProjetSerializer(serializers.ModelSerializer):
             'date_debut_sousprojet',
             'date_finsousprojet',
             'statut_sous_projet',
+            'pourcentage',
             'id_projet',
             'chef_projet',
             'members',

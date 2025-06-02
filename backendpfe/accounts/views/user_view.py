@@ -95,10 +95,11 @@ class UserView(APIView):
                 Employe.objects.create(id_utilisateur=user)
             elif user.role_de_utilisateur == 'chef':
                 Chefprojet.objects.create(id_utilisateur=user)
-            elif user.role_de_utilisateur == 'directeur':
+            elif user.role_de_utilisateur == 'directeur' or user.role_de_utilisateur == 'responsable':
                 Directeur.objects.create(id_utilisateur=user)
             elif user.role_de_utilisateur == 'financier':
                 Financier.objects.create(id_utilisateur=user)
+                Employe.objects.create(id_utilisateur=user)
             
             try:
                 EmailService.send_password_setup_email(user.email, token)

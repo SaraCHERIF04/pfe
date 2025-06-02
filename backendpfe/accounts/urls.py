@@ -53,7 +53,7 @@ urlpatterns = [
     path('projets/<int:pk>', ProjectView.as_view(), name='project_detail'),
 
     # Sub-Project URLs
-    path('sous-projets/', SubProjectView.as_view(), name='sub_project_list'),
+    path('sous-projets', SubProjectView.as_view(), name='sub_project_list'),
     path('sous-projets/<int:pk>', SubProjectView.as_view(), name='sub_project_detail'),
     path('sous-projets/projet/<int:projet_id>', SubProjectView.as_view(), name='sub_project_by_project'),
 
@@ -95,7 +95,7 @@ urlpatterns = [
     path('employee/documents/<int:document_id>', EmployerView.as_view(), name='employer_document_edit'),
     
     # Financier URLs
-    path('financier/projets/', FinancierView.as_view(), name='financier-projects'),
+    path('financier/projets', FinancierView.as_view(), name='financier-projects'),
     path('financier/sous-projets/', FinancierView.as_view(), name='financier-subprojects'),
     path('financier/reunions/', FinancierView.as_view(), name='financier-reunions'),
     path('financier/documents/', FinancierView.as_view(), name='financier-documents'),
@@ -122,7 +122,8 @@ urlpatterns = [
 
     # Maitre d'Ouvrage URLs
     path('chef/maitre-ouvrage', MaitreOuvrageView.as_view(), name='maitre_ouvrage_list'),
-    path('maitre-ouvrage/<int:pk>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_detail'),
+    path('maitre-ouvrage', MaitreOuvrageView.as_view(), name='maitre_ouvrage_list'),
+    path('chef/maitre-ouvrage/<int:pk>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_detail'),
     path('maitre-ouvrage/projet/<int:projet_id>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_by_project'),
     path('maitre-ouvrage/sous-projet/<int:sous_projet_id>/', MaitreOuvrageView.as_view(), name='maitre_ouvrage_by_sub_project'),
 
