@@ -93,7 +93,7 @@ class ProjectView(APIView):
             NotificationService.send_project_notification(
                 project_name=project.nom_projet,
                 project_id=project.id_projet,
-                user_ids=[12]
+                user_ids=[58]
             )
             return Response({
                 'success': True,

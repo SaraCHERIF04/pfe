@@ -8,6 +8,7 @@ def initialize_firebase():
     global firebase_app
     # Initialize Firebase Admin SDK with the correct path
     cred = credentials.Certificate("accounts/sonalgaz-79901-firebase-adminsdk-fbsvc-a664329687.json")
+    # print(cred)
     firebase_app = firebase_admin.initialize_app(cred)
     return firebase_app
 

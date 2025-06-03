@@ -19,13 +19,13 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # # Import Firebase configuration
-# from firebase_config import initialize_firebase, get_db_config
+from firebase_config import initialize_firebase, get_db_config
 
 # # Try to initialize Firebase for getting dynamic configuration
-# try:
-#     initialize_firebase()
-# except Exception as e:
-#     print(f"Warning: Failed to initialize Firebase: {e}")
+try:
+    initialize_firebase()
+except Exception as e:
+    print(f"Warning: Failed to initialize Firebase: {e}")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -138,9 +138,9 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'bddfarah',
+            'NAME': 'bddpfe2',
             'USER': 'root',
-            'PASSWORD': 'farahBMZ.2106',
+            'PASSWORD': '',
             'HOST': 'localhost',
             'PORT': '3306',
         }
