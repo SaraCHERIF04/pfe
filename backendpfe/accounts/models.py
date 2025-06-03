@@ -212,6 +212,17 @@ class EtatDavancementDeprojet(models.Model):
         db_table = 'etat_davancement_deprojet'
 
 
+class Ressource(models.Model):
+    id_ressource = models.AutoField(primary_key=True)
+    nom_ressource = models.CharField(max_length=25)
+    type_ressource = models.CharField(max_length=25)
+    prix_ressource = models.DecimalField(max_digits=65, decimal_places=4, blank=True, null=True)
+    id_projet = models.ForeignKey('Projet', models.DO_NOTHING, db_column='id_projet', blank=True, null=True)
+    id_sous_projet = models.ForeignKey('SousProjet', models.DO_NOTHING, db_column='id_sous_projet', blank=True, null=True)
+    class Meta:
+        managed = False
+        db_table = 'ressource'
+
 class Facture(models.Model):
     id_facture = models.AutoField(primary_key=True)
     numero_facture = models.IntegerField(blank=True, null=True)

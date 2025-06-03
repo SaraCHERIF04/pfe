@@ -152,7 +152,7 @@ class EmployerView(APIView):
             paginated_data, pagination_info = self.paginate_data(request, project_data)
             
             return Response({
-                'success': True,
+            'success': True,
                 'message': 'Employee projects retrieved successfully',
                 'pagination': pagination_info,
                 'data': paginated_data

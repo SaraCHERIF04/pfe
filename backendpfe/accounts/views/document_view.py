@@ -85,6 +85,7 @@ class DocumentView(APIView):
         }, status=status.HTTP_200_OK)
 
     def get_all_documents(self):
+        
         documents = Document.objects.all()
         serializer = DocumentSerializer(documents, many=True)
         

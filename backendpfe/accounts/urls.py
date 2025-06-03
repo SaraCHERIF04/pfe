@@ -23,9 +23,16 @@ from .views.user_view import ProfileView, ProfilePasswordView  # Ajout des nouve
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views.password_setup_view import PasswordSetupView
 from .views.auth_views import AuthView, ChangePasswordView
+from .views.ressource_view import RessourceViewSet, get_ressources_by_projet, get_ressources_by_sous_projet
 
 
 urlpatterns = [
+    # Resource URLs
+    path('ressources', RessourceViewSet.as_view({'get': 'list', 'post': 'create'}), name='ressource_list'),
+    path('ressources/<int:pk>', RessourceViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}), name='ressource_detail'),
+    path('ressources/projet/<int:projet_id>', get_ressources_by_projet, name='ressource_by_project'),
+    path('ressources/sous-projet/<int:sous_projet_id>', get_ressources_by_sous_projet, name='ressource_by_sub_project'),
+
     # dashboards
     path('dashboard/financier', FinancierView.as_view(), name='financier-dashboard'),
 
