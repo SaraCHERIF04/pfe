@@ -45,6 +45,29 @@ class ChangePasswordView(APIView):
 class AuthView(APIView):
     permission_classes = [AllowAny]
 
+
+    def get(self, request):
+        user = request.user
+        if user.is_authenticated:
+            refresh = RefreshToken.for_user(user)
+            return Response(SuccessAPIResponse({
+            'message': 'Login successful',
+            'data': {
+                'id_utilisateur': user.id_utilisateur,
+                'nom': user.nom,
+                'email': user.email,
+                'role_de_utilisateur': user.role_de_utilisateur,
+                'numero_de_tel': user.numero_de_tel,
+                'created_at': user.created_at,
+                'tokens': {
+                        'refresh': str(refresh),
+                        'access': str(refresh.access_token),
+                    }
+                }
+            }).data, status=status.HTTP_200_OK)
+        else:
+            return Response(ErrorAPIResponse({'message': 'User is not logged in'}).data, status=status.HTTP_401_UNAUTHORIZED)
+
     def post(self, request):
         action = request.data.get('action')
 
@@ -54,7 +77,8 @@ class AuthView(APIView):
             return self.create_account(request)
         else:
             return Response(ErrorAPIResponse({'error': 'Invalid action'}).data, status=status.HTTP_400_BAD_REQUEST)
-
+        
+        
     def login(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

@@ -77,7 +77,7 @@ class UserView(APIView):
 
         if user_type:
             if user_type == 'employee':
-                listTypes =['employee','finanicer']
+                listTypes =['employee','financier']
                 users = users.filter(
                     role_de_utilisateur__in=listTypes
                 )

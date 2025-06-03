@@ -171,7 +171,7 @@ class Document(models.Model):
     titre = models.CharField(max_length=30)
     type = models.CharField(max_length=30)
     date_ajout = models.DateField()
-    description = models.CharField(max_length=30)
+    description = models.CharField(max_length=2000)
     id_projet = models.ForeignKey('Projet', models.DO_NOTHING, db_column='id_projet', blank=True, null=True)
     id_sous_projet = models.ForeignKey('SousProjet', models.DO_NOTHING, db_column='id_sous_projet', blank=True, null=True)
 
@@ -287,11 +287,11 @@ class MaitreDoeuve(models.Model):
 class MaitreOuvrage(models.Model):
     id_mo = models.AutoField(primary_key=True)
     id_projet = models.ForeignKey('Projet', models.DO_NOTHING, db_column='id_projet', blank=True, null=True)
-    description_mo = models.CharField(max_length=30, null=True)
-    nom_mo = models.CharField(max_length=30, null=True)
+    description_mo = models.CharField(max_length=2000, null=True)
+    nom_mo = models.CharField(max_length=2000, null=True)
     type_mo = models.CharField(max_length=30, null=True)
-    adress_mo = models.CharField(max_length=50, null=True)
-    email_mo = models.CharField(unique=True, max_length=30, null=True)
+    adress_mo = models.CharField(max_length=2000, null=True)
+    email_mo = models.CharField(unique=True, max_length=2000, null=True)
     tel_mo = models.CharField(unique=True, max_length=10, null=True)
 
     class Meta:
@@ -302,7 +302,7 @@ class MaitreOuvrage(models.Model):
 class Marche(models.Model):
     id_marche = models.AutoField(primary_key=True)
     date_marche = models.DateField()
-    description_marche = models.CharField(max_length=100)
+    description_marche = models.CharField(max_length=2000)
     id_projet = models.ForeignKey('Projet', models.DO_NOTHING, db_column='id_projet', blank=True, null=True)
     numero_marche = models.IntegerField()
     numero_appel_dof = models.IntegerField()
@@ -321,8 +321,8 @@ class Marche(models.Model):
 
 class Projet(models.Model):
     id_projet = models.AutoField(primary_key=True)
-    nom_projet = models.CharField(max_length=30)
-    description_de_projet = models.CharField(max_length=30)
+    nom_projet = models.CharField(max_length=500)
+    description_de_projet = models.CharField(max_length=2000)
     date_debut_de_projet = models.DateField()
     date_fin_de_projet = models.DateField()
     budget = models.FloatField()
@@ -343,7 +343,7 @@ class Reunion(models.Model):
     id_projet = models.ForeignKey(Projet, models.DO_NOTHING, db_column='id_projet', blank=True, null=True)
     id_utilisateur = models.ForeignKey(Chefprojet, models.DO_NOTHING, db_column='id_utilisateur', blank=True, null=True)
     heure_re = models.TimeField(blank=True, null=True)
-    lieu_reunion = models.CharField(max_length=50, blank=True, null=True)
+    lieu_reunion = models.CharField(max_length=500, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -352,7 +352,7 @@ class Reunion(models.Model):
 
 class SousProjet(models.Model):
     id_sous_projet = models.AutoField(primary_key=True)
-    nom_sous_projet = models.CharField(max_length=30)
+    nom_sous_projet = models.CharField(max_length=500)
     date_debut_sousprojet = models.DateField()
     date_finsousprojet = models.DateField()
     pourcentage = models.FloatField()

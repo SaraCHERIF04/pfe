@@ -25,9 +25,9 @@ class EmployerView(APIView):
     pagination_class = CustomPagination
     
     def get_employee(self, request):
-        """Get the employee record for the current user"""
+        """Get all employee records for the current user"""
         try:
-            return Employe.objects.get(id_utilisateur=request.user.id_utilisateur)
+            return Employe.objects.filter(id_utilisateur=request.user.id_utilisateur)
         except Employe.DoesNotExist:
             return None
     
@@ -48,42 +48,60 @@ class EmployerView(APIView):
         """
         Main router for the employer view
         """
-        employee = self.get_employee(request)
-        if not employee:
+        employees = self.get_employee(request)
+        if not employees:
             return Response({
                 'success': False,
-                'message': 'Employee record not found for this user'
+                'message': 'Employee records not found for this user'
             }, status=status.HTTP_404_NOT_FOUND)
             
         if data_type == 'projects':
-            return self.get_projects(request, employee)
+            return self.get_projects(request, employees)
         elif data_type == 'subprojects':
-            return self.get_subprojects(request, employee)
+            return self.get_subprojects(request, employees)
         elif data_type == 'reunions':
-            return self.get_reunions(request, employee)
+            return self.get_reunions(request, employees)
         elif data_type == 'incidents':
-            return self.get_incidents(request, employee)
+            return self.get_incidents(request, employees)
         elif data_type == 'documents':
-            return self.get_documents(request, employee)
+            return self.get_documents(request, employees)
         else:
-            return self.get_dashboard(request, employee)
+            return self.get_dashboard(request, employees)
     
-    def get_dashboard(self, request, employee):
+    def get_dashboard(self, request, employees):
         """
         Get all projects, subprojects, reunions, and incidents associated with the logged-in employee.
         """
         try:
-            # Get projects and subprojects associated with this employee
+            # Get all projects and subprojects associated with these employees
             projects = []
             subprojects = []
             
-            if employee.id_projet:
-                projects = [employee.id_projet]
-            if employee.id_sous_projet:
-                subprojects = [employee.id_sous_projet]
-                
+            for employee in employees:
+                if employee.id_projet:
+                    projects.append(employee.id_projet)
+                if employee.id_sous_projet:
+                    subprojects.append(employee.id_sous_projet)
+                    if employee.id_sous_projet.id_projet:
+                        projects.append(employee.id_sous_projet.id_projet)
+            
+            # Remove duplicates while preserving order
+            unique_projects = []
+            seen_project_ids = set()
+            for project in projects:
+                if project.id_projet not in seen_project_ids:
+                    seen_project_ids.add(project.id_projet)
+                    unique_projects.append(project)
+            
+            unique_subprojects = []
+            seen_subproject_ids = set()
+            for subproject in subprojects:
+                if subproject.id_sous_projet not in seen_subproject_ids:
+                    seen_subproject_ids.add(subproject.id_sous_projet)
+                    unique_subprojects.append(subproject)
+            
             # If no projects or subprojects are assigned to the employee
-            if not projects and not subprojects:
+            if not unique_projects and not unique_subprojects:
                 return Response({
                     'success': True,
                     'message': 'No projects or subprojects assigned to this employee',
@@ -96,26 +114,19 @@ class EmployerView(APIView):
                 }, status=status.HTTP_200_OK)
             
             # Get all reunions related to the employee's projects
-            reunions = []
-            if projects:
-                project_ids = [p.id_projet for p in projects]
-                reunions = Reunion.objects.filter(id_projet__in=project_ids).distinct()
+            project_ids = [p.id_projet for p in unique_projects]
+            reunions = Reunion.objects.filter(id_projet__id_projet__in=project_ids).distinct()
             
             # Get all incidents related to the employee's projects/subprojects
-            incidents = []
-            if projects or subprojects:
-                q_objects = Q()
-                if projects:
-                    project_ids = [p.id_projet for p in projects]
-                    q_objects |= Q(id_projet__in=project_ids)
-                if subprojects:
-                    subproject_ids = [sp.id_sous_projet for sp in subprojects]
-                    q_objects |= Q(id_sous_projet__in=subproject_ids)
-                incidents = Incident.objects.filter(q_objects).distinct()
+            subproject_ids = [sp.id_sous_projet for sp in unique_subprojects]
+            incidents = Incident.objects.filter(
+                Q(id_projet__id_projet__in=project_ids) | 
+                Q(id_sous_projet__id_sous_projet__in=subproject_ids)
+            ).distinct()
             
             # Serialize the data
-            project_data = self.serialize_projects(projects)
-            subproject_data = self.serialize_subprojects(subprojects)
+            project_data = self.serialize_projects(unique_projects)
+            subproject_data = self.serialize_subprojects(unique_subprojects)
             reunion_data = self.serialize_reunions(reunions)
             incident_data = self.serialize_incidents(incidents)
             
@@ -136,23 +147,35 @@ class EmployerView(APIView):
                 'message': f'Error retrieving employee data: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def get_projects(self, request, employee):
-        """Get projects assigned to the employee"""
+    def get_projects(self, request, employees):
+        """Get all projects assigned to the employee"""
         try:
             projects = []
-            subprojectsIds = Employe.objects.filter(id_utilisateur=employee.id_utilisateur).values_list('id_sous_projet', flat=True)
+            for employee in employees:
+                if employee.id_projet:
+                    projects.append(employee.id_projet)
+                
+                # Also get projects from subprojects
+                if employee.id_sous_projet:
+                    subproject = employee.id_sous_projet
+                    if subproject.id_projet:
+                        projects.append(subproject.id_projet)
             
-            user_sub_projects = SousProjet.objects.filter(id_sous_projet__in=subprojectsIds)
-            # Get the parent projects of these sub-projects
-            project_ids = user_sub_projects.values_list('id_projet', flat=True).distinct()
-            projects = Projet.objects.filter(id_projet__in=project_ids)
-            project_data = self.serialize_projects(projects)
+            # Remove duplicates while preserving order
+            unique_projects = []
+            seen_ids = set()
+            for project in projects:
+                if project.id_projet not in seen_ids:
+                    seen_ids.add(project.id_projet)
+                    unique_projects.append(project)
+            
+            project_data = self.serialize_projects(unique_projects)
             
             # Handle pagination
             paginated_data, pagination_info = self.paginate_data(request, project_data)
             
             return Response({
-            'success': True,
+                'success': True,
                 'message': 'Employee projects retrieved successfully',
                 'pagination': pagination_info,
                 'data': paginated_data
@@ -163,14 +186,23 @@ class EmployerView(APIView):
                 'message': f'Error retrieving employee projects: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def get_subprojects(self, request, employee):
-        """Get subprojects assigned to the employee"""
+    def get_subprojects(self, request, employees):
+        """Get all subprojects assigned to the employee"""
         try:
             subprojects = []
-            if employee.id_sous_projet:
-                subprojects = [employee.id_sous_projet]
+            for employee in employees:
+                if employee.id_sous_projet:
+                    subprojects.append(employee.id_sous_projet)
             
-            subproject_data = self.serialize_subprojects(subprojects)
+            # Remove duplicates while preserving order
+            unique_subprojects = []
+            seen_ids = set()
+            for subproject in subprojects:
+                if subproject.id_sous_projet not in seen_ids:
+                    seen_ids.add(subproject.id_sous_projet)
+                    unique_subprojects.append(subproject)
+            
+            subproject_data = self.serialize_subprojects(unique_subprojects)
             
             # Handle pagination
             paginated_data, pagination_info = self.paginate_data(request, subproject_data)
@@ -187,18 +219,17 @@ class EmployerView(APIView):
                 'message': f'Error retrieving employee subprojects: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def get_reunions(self, request, employee):
-        """Get reunions related to the employee's projects"""
+    def get_reunions(self, request, employees):
+        """Get all reunions related to the employee's projects"""
         try:
-            projects = []
-            if employee.id_projet:
-                projects = [employee.id_projet]
+            project_ids = set()
+            for employee in employees:
+                if employee.id_projet:
+                    project_ids.add(employee.id_projet.id_projet)
+                if employee.id_sous_projet and employee.id_sous_projet.id_projet:
+                    project_ids.add(employee.id_sous_projet.id_projet.id_projet)
             
-            reunions = []
-            if projects:
-                project_ids = [p.id_projet for p in projects]
-                reunions = Reunion.objects.filter(id_projet__in=project_ids)    .distinct()
-            
+            reunions = Reunion.objects.filter(id_projet__id_projet__in=project_ids).distinct()
             reunion_data = self.serialize_reunions(reunions)
             
             # Handle pagination
@@ -216,21 +247,27 @@ class EmployerView(APIView):
                 'message': f'Error retrieving employee reunions: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def get_incidents(self, request, employee):
-        """Get incidents related to the employee's projects and subprojects"""
+    def get_incidents(self, request, employees):
+        """Get all incidents related to the employee's projects and subprojects"""
         try:
-            projects = []
-            subprojects = []
+            project_ids = set()
+            subproject_ids = set()
             
-            if employee.id_projet:
-                projects = [employee.id_projet]
-            if employee.id_sous_projet:
-                subprojects = [employee.id_sous_projet]
+            for employee in employees:
+                if employee.id_projet:
+                    project_ids.add(employee.id_projet.id_projet)
+                if employee.id_sous_projet:
+                    subproject_ids.add(employee.id_sous_projet.id_sous_projet)
+                    if employee.id_sous_projet.id_projet:
+                        project_ids.add(employee.id_sous_projet.id_projet.id_projet)
             
-            incidents = Incident.objects.all()
-
+            incidents = Incident.objects.filter(
+                Q(id_projet__id_projet__in=project_ids) | 
+                Q(id_sous_projet__id_sous_projet__in=subproject_ids)
+            ).distinct()
+            
             incident_data = self.serialize_incidents(incidents)
-
+            
             # Handle pagination
             paginated_data, pagination_info = self.paginate_data(request, incident_data)
             
@@ -246,40 +283,24 @@ class EmployerView(APIView):
                 'message': f'Error retrieving employee incidents: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def get_documents(self, request, employee):
+    def get_documents(self, request, employees):
         """Get all documents associated with the employee's projects and subprojects"""
         try:
-            # Get projects and subprojects associated with this employee
-            projects = []
-            subprojects = []
+            project_ids = set()
+            subproject_ids = set()
             
-            if employee.id_projet:
-                projects = [employee.id_projet]
-            if employee.id_sous_projet:
-                subprojects = [employee.id_sous_projet]
-                
-            # If no projects or subprojects are assigned to the employee
-            if not projects and not subprojects:
-                return Response({
-                    'success': True,
-                    'message': 'No projects or subprojects assigned to this employee, thus no documents available',
-                    'data': []
-                }, status=status.HTTP_200_OK)
+            for employee in employees:
+                if employee.id_projet:
+                    project_ids.add(employee.id_projet.id_projet)
+                if employee.id_sous_projet:
+                    subproject_ids.add(employee.id_sous_projet.id_sous_projet)
+                    if employee.id_sous_projet.id_projet:
+                        project_ids.add(employee.id_sous_projet.id_projet.id_projet)
             
-            # Get all documents related to the employee's projects/subprojects
-            documents = []
-            
-            # Build query conditions
-            q_objects = Q()
-            if projects:
-                project_ids = [p.id_projet for p in projects]
-                q_objects |= Q(id_projet__in=project_ids)
-            if subprojects:
-                subproject_ids = [sp.id_sous_projet for sp in subprojects]
-                q_objects |= Q(id_sous_projet__in=subproject_ids)
-                
-            # Query documents
-            documents = Document.objects.filter(q_objects).distinct()
+            documents = Document.objects.filter(
+                Q(id_projet__id_projet__in=project_ids) | 
+                Q(id_sous_projet__id_sous_projet__in=subproject_ids)
+            ).distinct()
             
             # Serialize the documents
             document_data = []
@@ -313,15 +334,15 @@ class EmployerView(APIView):
         """
         Router for POST requests
         """
-        employee = self.get_employee(request)
-        if not employee:
+        employees = self.get_employee(request)
+        if not employees:
             return Response({
                 'success': False,
-                'message': 'Employee record not found for this user'
+                'message': 'Employee records not found for this user'
             }, status=status.HTTP_404_NOT_FOUND)
             
         if data_type == 'documents':
-            return self.add_document(request, employee)
+            return self.add_document(request, employees)
         else:
             return Response({
                 'success': False,
@@ -332,22 +353,22 @@ class EmployerView(APIView):
         """
         Router for PUT requests
         """
-        employee = self.get_employee(request)
-        if not employee:
+        employees = self.get_employee(request)
+        if not employees:
             return Response({
                 'success': False,
-                'message': 'Employee record not found for this user'
+                'message': 'Employee records not found for this user'
             }, status=status.HTTP_404_NOT_FOUND)
             
         if document_id:
-            return self.edit_document(request, employee, document_id)
+            return self.edit_document(request, employees, document_id)
         else:
             return Response({
                 'success': False,
                 'message': 'Invalid endpoint'
             }, status=status.HTTP_400_BAD_REQUEST)
             
-    def add_document(self, request, employee):
+    def add_document(self, request, employees):
         """Add a new document associated with the employee's project or subproject"""
         try:
             data = request.data
@@ -385,8 +406,10 @@ class EmployerView(APIView):
                 try:
                     project_id = data['project_id']
                     # Check if employee is assigned to this project
-                    if employee.id_projet and employee.id_projet.id_projet == int(project_id):
-                        project = Projet.objects.get(id_projet=project_id)
+                    for employee in employees:
+                        if employee.id_projet and employee.id_projet.id_projet == int(project_id):
+                            project = Projet.objects.get(id_projet=project_id)
+                            break
                     else:
                         return Response({
                             'success': False,
@@ -403,8 +426,10 @@ class EmployerView(APIView):
                 try:
                     subproject_id = data['subproject_id']
                     # Check if employee is assigned to this subproject
-                    if employee.id_sous_projet and employee.id_sous_projet.id_sous_projet == int(subproject_id):
-                        subproject = SousProjet.objects.get(id_sous_projet=subproject_id)
+                    for employee in employees:
+                        if employee.id_sous_projet and employee.id_sous_projet.id_sous_projet == int(subproject_id):
+                            subproject = SousProjet.objects.get(id_sous_projet=subproject_id)
+                            break
                     else:
                         return Response({
                             'success': False,
@@ -495,7 +520,7 @@ class EmployerView(APIView):
                 'message': f'Error adding document: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def edit_document(self, request, employee, document_id):
+    def edit_document(self, request, employees, document_id):
         """Edit an existing document"""
         try:
             # Get the document
@@ -511,13 +536,17 @@ class EmployerView(APIView):
             has_access = False
             
             # Check project access
-            if document.id_projet and employee.id_projet and document.id_projet.id_projet == employee.id_projet.id_projet:
-                has_access = True
-                
+            for employee in employees:
+                if document.id_projet and employee.id_projet and document.id_projet.id_projet == employee.id_projet.id_projet:
+                    has_access = True
+                    break
+            
             # Check subproject access
-            if document.id_sous_projet and employee.id_sous_projet and document.id_sous_projet.id_sous_projet == employee.id_sous_projet.id_sous_projet:
-                has_access = True
-                
+            for employee in employees:
+                if document.id_sous_projet and employee.id_sous_projet and document.id_sous_projet.id_sous_projet == employee.id_sous_projet.id_sous_projet:
+                    has_access = True
+                    break
+            
             if not has_access:
                 return Response({
                     'success': False,
@@ -842,25 +871,25 @@ class EmployeeDashboardView(APIView):
             - Monthly progression data
         """
         try:
-            # Get the employee record
+            # Get all employee records for the current user
             try:
-                employee = Employe.objects.get(id_utilisateur=request.user.id_utilisateur)
+                employees = Employe.objects.filter(id_utilisateur=request.user.id_utilisateur)
             except Employe.DoesNotExist:
                 return Response({
                     'success': False,
-                    'message': 'Employee record not found for this user'
+                    'message': 'Employee records not found for this user'
                 }, status=status.HTTP_404_NOT_FOUND)
             
-            # Get the sub-project assigned to this employee
-            # print(employee.id_sous_projet)
-            subproject = employee.id_sous_projet if employee.id_sous_projet else None
-            # print(subproject)
+            # Get all sub-projects assigned to this employee
+            subprojects = []
+            for employee in employees:
+                if employee.id_sous_projet:
+                    subprojects.append(employee.id_sous_projet)
 
-            print(subproject)
-            if not subproject:
+            if not subprojects:
                 return Response({
                     'success': True,
-                    'message': 'No sub-project assigned to this employee',
+                    'message': 'No sub-projects assigned to this employee',
                     'data': {
                         'total_subprojects': 0,
                         'status_counts': {
@@ -873,19 +902,21 @@ class EmployeeDashboardView(APIView):
                     }
                 }, status=status.HTTP_200_OK)
             
-            # Get all incidents related to the employee's sub-project
-            incidents = Incident.objects.filter(id_sous_projet=subproject.id_sous_projet).order_by('-date_incident')[:6]
+            # Get all incidents related to the employee's sub-projects
+            subproject_ids = [sp.id_sous_projet for sp in subprojects]
+            incidents = Incident.objects.filter(id_sous_projet__in=subproject_ids).order_by('-date_incident')[:6]
             
-            # Get status counts
+            # Get status counts for all sub-projects
             status_labels = ['termine', 'en cours', 'en attente']
+            status_counts = {label: 0 for label in status_labels}
             
-            # Since we're looking at a single sub-project, the count will be either 0 or 1 for each status
-            status_counts = {}
-            for label in status_labels:
-                status_counts[label] = 1 if subproject.statut_sous_projet.lower() == label.lower() else 0
+            for subproject in subprojects:
+                status_label = subproject.statut_sous_projet.lower()
+                if status_label in status_counts:
+                    status_counts[status_label] += 1
             
-            # Generate monthly progression data
-            monthly_progression = self.generate_monthly_progression(subproject)
+            # Generate monthly progression data for all sub-projects
+            monthly_progression = self.generate_monthly_progression(subprojects)
             
             # Serialize the incidents
             incident_data = []
@@ -900,19 +931,24 @@ class EmployeeDashboardView(APIView):
                     'subproject': incident.id_sous_projet.nom_sous_projet if incident.id_sous_projet else None
                 })
             
+            # Serialize subproject information
+            subproject_info = []
+            for subproject in subprojects:
+                subproject_info.append({
+                    'id': subproject.id_sous_projet,
+                    'name': subproject.nom_sous_projet,
+                    'status': subproject.statut_sous_projet,
+                    'progress': subproject.pourcentage,
+                    'start_date': subproject.date_debut_sousprojet,
+                    'end_date': subproject.date_finsousprojet
+                })
+            
             return Response({
                 'success': True,
                 'message': 'Employee dashboard data retrieved successfully',
                 'data': {
-                    'total_subprojects': 1,  # Employee is assigned to one sub-project
-                    'subproject_info': {
-                        'id': subproject.id_sous_projet,
-                        'name': subproject.nom_sous_projet,
-                        'status': subproject.statut_sous_projet,
-                        'progress': subproject.pourcentage,
-                        'start_date': subproject.date_debut_sousprojet,
-                        'end_date': subproject.date_finsousprojet
-                    },
+                    'total_subprojects': len(subprojects),
+                    'subproject_info': subproject_info,
                     'status_counts': status_counts,
                     'recent_incidents': incident_data,
                     'monthly_progression': monthly_progression
@@ -925,16 +961,23 @@ class EmployeeDashboardView(APIView):
                 'message': f'Error retrieving employee dashboard data: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def generate_monthly_progression(self, subproject):
+    def generate_monthly_progression(self, subprojects):
         """
-        Generate monthly progression data for visualization.
+        Generate monthly progression data for visualization for all sub-projects.
         Since we don't have historical data, we'll create sample data based on the current progress.
         """
-        # Get current date and project start date
+        # Get current date
         current_date = datetime.now().date()
-        start_date = subproject.date_debut_sousprojet
-        end_date = subproject.date_finsousprojet
-        current_progress = subproject.pourcentage
+        
+        # Find the earliest start date and latest end date among all sub-projects
+        start_dates = [sp.date_debut_sousprojet for sp in subprojects if sp.date_debut_sousprojet]
+        end_dates = [sp.date_finsousprojet for sp in subprojects if sp.date_finsousprojet]
+        
+        if not start_dates or not end_dates:
+            return []
+            
+        start_date = min(start_dates)
+        end_date = max(end_dates)
         
         # If the project hasn't started yet or is in the future
         if current_date < start_date:
@@ -946,7 +989,9 @@ class EmployeeDashboardView(APIView):
         # If the project is less than a month, return current progress only
         if total_months <= 1:
             month_name = calendar.month_abbr[start_date.month]
-            return [{'month': month_name, 'progress': current_progress}]
+            # Calculate average progress across all sub-projects
+            avg_progress = sum(sp.pourcentage for sp in subprojects) / len(subprojects)
+            return [{'month': month_name, 'progress': avg_progress}]
         
         # Calculate months elapsed so far
         if current_date > end_date:
@@ -971,8 +1016,10 @@ class EmployeeDashboardView(APIView):
                 progress = min(100, (i / total_months) * 100)
             else:
                 # Past month - calculate based on current progress
+                # Use average progress across all sub-projects
+                avg_progress = sum(sp.pourcentage for sp in subprojects) / len(subprojects)
                 progress_ratio = i / months_elapsed
-                progress = min(100, progress_ratio * current_progress)
+                progress = min(100, progress_ratio * avg_progress)
                 
             # Add some randomness to make it look realistic
             import random

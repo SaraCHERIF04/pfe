@@ -68,6 +68,8 @@ class MeetingView(APIView):
         return paginated_response
 
     def post(self, request):
+        # Set the id_utilisateur to the authenticated user's ID
+        request.data['id_utilisateur'] = request.user.id_utilisateur
         serializer = ReunionSerializer(data=request.data)
         if serializer.is_valid():
             meeting = serializer.save()
