@@ -64,6 +64,7 @@ class UserView(APIView):
         users = Utilisateur.objects.all()
         
         search_query = self.request.query_params.get('search', None)
+        user_type = self.request.query_params.get('type', None)
         if search_query:
             users = users.filter(
                 nom__icontains=search_query
@@ -72,7 +73,17 @@ class UserView(APIView):
             ) | users.filter(
                 matricule__icontains=search_query
             )
-            
+        
+
+        if user_type:
+            if user_type == 'employee':
+                listTypes =['employee','finanicer']
+                users = users.filter(
+                    role_de_utilisateur__in=listTypes
+                )
+
+
+
         serializer = UtilisateurSerializer(users, many=True)
         
         paginated_response = self.get_paginated_response(serializer.data)

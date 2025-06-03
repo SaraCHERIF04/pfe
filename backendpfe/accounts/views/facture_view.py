@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-from ..models import Facture,Projet,Employe
+from ..models import Facture,Projet,Employe,SousProjet
 from ..serializers.facture_serializer import FactureSerializer
 from ..responses.success_api_response import SuccessAPIResponse
 from ..responses.error_api_response import ErrorAPIResponse
@@ -59,8 +59,8 @@ class FactureView(APIView):
         if user.role_de_utilisateur == 'chef':
             project_ids = Projet.objects.filter(id_utilisateur=user.id_utilisateur).values_list('id_projet', flat=True)
             factures = Facture.objects.filter(id_projet__in=project_ids)
-        elif user.role_de_utilisateur == 'employer' or user.role_de_utilisateur == 'financier':
-            subProjectIds = Facture.objects.objects.filter(id_utilisateur=user.id_utilisateur).values_list('id_sous_projet', flat=True)
+        elif user.role_de_utilisateur == 'employee' or user.role_de_utilisateur == 'financier':
+            subProjectIds = Employe.objects.filter(id_utilisateur=user.id_utilisateur).values_list('id_sous_projet', flat=True)
             factures = Facture.objects.filter(id_sous_projet__in=subProjectIds)
         else:
             factures = Facture.objects.all()
