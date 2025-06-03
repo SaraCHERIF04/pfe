@@ -109,7 +109,7 @@ class SubProjectView(APIView):
         members_data = request.data.pop('members', [])
         documents_data = request.data.pop('documents', [])
          # Add members to the sub-project
-        pourcentage_avancement = request.data.pop('pourcentage_avancement', None)
+        pourcentage_avancement = request.data.pop('pourcentage', None)
         # Add members to the sub-project
         Employe.objects.filter(id_sous_projet=sous_projet).delete()
         for member_data in members_data:

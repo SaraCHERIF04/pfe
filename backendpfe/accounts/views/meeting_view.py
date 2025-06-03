@@ -26,7 +26,7 @@ class MeetingView(APIView):
     def get(self, request, pk=None):
         if pk:
             user = request.user
-            return self.get_single_meeting(request, pk, user)
+            return self.get_single_meeting(request, pk)
         user = request.user
         return self.get_all_meetings(user)
 
@@ -49,7 +49,7 @@ class MeetingView(APIView):
         if(user.role_de_utilisateur == 'chef'):
             project_ids = Projet.objects.filter(id_utilisateur=user.id_utilisateur).values_list('id_projet', flat=True)
             meetings = Reunion.objects.filter(id_projet__in=project_ids)
-        elif(user.role_de_utilisateur == 'employee'):
+        elif(user.role_de_utilisateur == 'employee' or user.role_de_utilisateur == 'financier'):
             subProjectIds = Employe.objects.filter(id_utilisateur=user.id_utilisateur).values_list('id_sous_projet', flat=True)
             user_sub_projects = SousProjet.objects.filter(id_sous_projet__in=subProjectIds)
             project_ids = user_sub_projects.values_list('id_projet', flat=True).distinct()
