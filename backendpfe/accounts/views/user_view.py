@@ -131,6 +131,7 @@ class UserView(APIView):
 
     def put(self, request, pk):
         user = self.get_object(pk)
+        user_previous_role = user.role_de_utilisateur
         if not user:
             return Response({
                 'success': False,
@@ -163,7 +164,27 @@ class UserView(APIView):
                 serializer.validated_data['mot_de_passe'] = make_password(password)
             
             user = serializer.save()
+            if user_previous_role != user.role_de_utilisateur:
+                if user.role_de_utilisateur == 'employee':
+                    Employe.objects.create(id_utilisateur=user)
+                elif user.role_de_utilisateur == 'chef':
+                    Chefprojet.objects.create(id_utilisateur=user)
+                elif user.role_de_utilisateur == 'directeur' or user.role_de_utilisateur == 'responsable':
+                    Directeur.objects.create(id_utilisateur=user)
+                elif user.role_de_utilisateur == 'financier':
+                    Financier.objects.create(id_utilisateur=user)
+                    Employe.objects.create(id_utilisateur=user)
             
+            if user_previous_role == 'employee':
+                Employe.objects.filter(id_utilisateur=user).delete()
+            elif user_previous_role == 'chef':
+                Chefprojet.objects.filter(id_utilisateur=user).delete()
+            elif user_previous_role == 'directeur' or user_previous_role == 'responsable':
+                Directeur.objects.filter(id_utilisateur=user).delete()
+            elif user_previous_role == 'financier':
+                Financier.objects.filter(id_utilisateur=user).delete()
+                Employe.objects.filter(id_utilisateur=user).delete()
+
             return Response({
                 'success': True,
                 'message': 'User updated successfully',

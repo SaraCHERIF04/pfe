@@ -904,14 +904,14 @@ class EmployeeDashboardView(APIView):
             
             # Get all incidents related to the employee's sub-projects
             subproject_ids = [sp.id_sous_projet for sp in subprojects]
-            incidents = Incident.objects.filter(id_sous_projet__in=subproject_ids).order_by('-date_incident')[:6]
+            incidents = Incident.objects.all().order_by('-date_incident')[:6]
             
             # Get status counts for all sub-projects
-            status_labels = ['termine', 'en cours', 'en attente']
+            status_labels = ['Terminé', 'En cours', 'En attente']
             status_counts = {label: 0 for label in status_labels}
             
             for subproject in subprojects:
-                status_label = subproject.statut_sous_projet.lower()
+                status_label = subproject.statut_sous_projet
                 if status_label in status_counts:
                     status_counts[status_label] += 1
             
