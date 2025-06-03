@@ -138,7 +138,7 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'bddfarah',
+            'NAME': 'pfebddfinal',
             'USER': 'root',
             'PASSWORD': 'farahBMZ.2106',
             'HOST': 'localhost',
@@ -147,9 +147,10 @@ else:
     }
 
 # Looking to send emails in production? Check out our Email API/SMTP product!
+# Looking to send emails in production? Check out our Email API/SMTP product!
 EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
-EMAIL_HOST_USER = 'f59bc6c7211a7e'
-EMAIL_HOST_PASSWORD = 'd1b55446cde625'
+EMAIL_HOST_USER = '4ef262881b8ea9'
+EMAIL_HOST_PASSWORD = 'b410ec2b085b3a'
 EMAIL_PORT = '2525'
 
 # Password validation
