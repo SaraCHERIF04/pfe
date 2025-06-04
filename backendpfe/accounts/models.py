@@ -249,7 +249,7 @@ class Facture(models.Model):
 class Financier(models.Model):
     etat_financier = models.CharField(max_length=50)
     id_utilisateur = models.OneToOneField('Utilisateur', models.DO_NOTHING, db_column='id_utilisateur', primary_key=True)
-    id_reunion = models.ForeignKey('Reunion', models.DO_NOTHING, db_column='id_Reunion', blank=True, null=True)  # Field name made lowercase.
+
     id_sous_projet = models.ForeignKey('SousProjet', models.DO_NOTHING, db_column='id_sous_projet', blank=True, null=True)
 
     class Meta:

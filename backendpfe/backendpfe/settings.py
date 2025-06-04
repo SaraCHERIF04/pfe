@@ -19,13 +19,13 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # # Import Firebase configuration
-from firebase_config import initialize_firebase, get_db_config
+# from firebase_config import initialize_firebase, get_db_config
 
 # # Try to initialize Firebase for getting dynamic configuration
-try:
-    initialize_firebase()
-except Exception as e:
-    print(f"Warning: Failed to initialize Firebase: {e}")
+# try:
+#     initialize_firebase()
+# except Exception as e:
+#     print(f"Warning: Failed to initialize Firebase: {e}")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -138,9 +138,9 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'pddpfe3',
+            'NAME': 'soutenancepfel3',
             'USER': 'root',
-            'PASSWORD': '',
+            'PASSWORD': 'farahBMZ.2106',
             'HOST': 'localhost',
             'PORT': '3306',
         }
@@ -148,11 +148,11 @@ else:
 
 # Looking to send emails in production? Check out our Email API/SMTP product!
 # Looking to send emails in production? Check out our Email API/SMTP product!
+# Looking to send emails in production? Check out our Email API/SMTP product!
 EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
-EMAIL_HOST_USER = '4ef262881b8ea9'
-EMAIL_HOST_PASSWORD = 'b410ec2b085b3a'
+EMAIL_HOST_USER = 'd67c3d2ff08f67'
+EMAIL_HOST_PASSWORD = '164c18299bac5f'
 EMAIL_PORT = '2525'
-
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
